@@ -87,8 +87,9 @@ regenerate texts. Current v0.1.0 remains intact during this preparation.
 
 1. Register a private GitHub App under Energy-Quant using
    `.github/automation-app-manifest.json` as the permission specification.
-   Disable webhooks; install it on Iskra only. Contents/actions/PR write are
-   sufficient; it needs no account-wide access or Zeron permissions.
+   Disable webhooks; install it on Iskra only. Grant contents/actions/PR write
+   and checks read for observing required gates. It needs no account-wide
+   access or Zeron permissions.
 2. Generate its private key in GitHub's UI. The person stores it directly
    as Actions secret `ISKRA_RELEASE_APP_PRIVATE_KEY`; the agent never reads
    it. Add repository variable `ISKRA_RELEASE_APP_ID` with the public App ID.

@@ -116,6 +116,7 @@ jobs:
           permission-contents: write
           permission-pull-requests: write
           permission-actions: write
+          permission-checks: read
       - name: Merge the green dev PR
         env:
           GH_TOKEN: ${{ steps.app.outputs.token || github.token }}

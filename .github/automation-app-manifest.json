@@ -6,6 +6,7 @@
     "contents": "write",
     "pull_requests": "write",
     "actions": "write",
+    "checks": "read",
     "metadata": "read"
   },
   "default_events": []
