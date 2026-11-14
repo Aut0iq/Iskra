@@ -43,6 +43,15 @@ Both unsigned staging and companion archives include root notices
 byte-exact; the companion includes the frozen dependency-text snapshot.
 The signed export still requires inspection after the owner produces it.
 
+## 0.2.0 lockfile review
+
+Only the root `zeron-pet` package version changed from 0.1.0 to 0.2.0.
+Parsing both lockfiles and restoring that one version gives identical TOML
+data: no dependency version, checksum, source or resolution changed.
+All 100 snapshot package records and all 193 license texts were preserved;
+each text SHA256 was verified before updating the manifest's lockfile pin.
+The snapshot was not regenerated. Packaging checks validate the new pin.
+
 ## Release checks still separate from source publication
 
 Latest-version live smoke, human signing/consent and signed export review
