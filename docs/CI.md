@@ -1,29 +1,19 @@
-# CI workflow
+# CI and package matrix
 
-The workflow in `.github/workflows/ci.yml` runs headless checks and builds
-unsigned artifacts. Consult the repository Actions tab for hosted results;
-local validation alone is not evidence that runner provisioning works.
+The authoritative pipeline is .github/workflows/ci.yml, with reusable Linux
+checks in linux.yml and privileged delivery in delivery.yml.
 
-Local final validation passed with actionlint 1.7.7, YAML parsing and
-`bash -n` for every run block. The pinned Luau compiler was also built
-locally and parsed all seven plugin Lua/Luau sources. Local raw evidence
-is retained in the private working archive. Runner provisioning is
-verified by a successful hosted run.
+- Linux: Rust 1.96.0, locked tests, fmt, clippy, RustSec audit, pinned
+  layer-shell/Luau source builds, Lua/i18n, installer/packaging/Ed25519 tests,
+  shellcheck and actionlint. Runtime applications are never launched.
+- Windows/macOS/Linux: Python 3.12 and Pillow 13.0.0, avatar/portable tests,
+  unsigned plugin staging ZIPs and avatar authoring toolkits.
+- CI Gate: every required dependency must succeed. A skipped, cancelled or
+  failed build does not qualify for a stable release or promotion.
 
-The workflow runs on pushes, pull requests and manual dispatch, using
-`ubuntu-24.04` with read-only repository contents permission. It builds
-GTK4 layer shell and the Luau compiler from pinned upstream commits on
-the runner; those downloads and installations do not provision local
-tools.
+Current native desktop package: Linux/Wayland x86_64. Windows/macOS ZIPs
+contain a portable plugin/toolkit; they are not desktop executables.
 
-After `cargo fetch --locked`, the workflow runs Rust formatting, offline
-locked tests and clippy, Lua 5.4 plugin tests, locale parity and
-packaging tests. It stages the plugin unsigned and parses plugin Luau
-sources, then builds the desktop companion without launching it. Lua 5.5
-was also used in local tests; the workflow currently runs Lua 5.4 only.
-
-The workflow uploads `dist/ci/` as an unsigned build artifact retained
-for seven days, including the unsigned plugin staging tree, companion
-tarball, the optional ashell bridge executable and their checksums. It does not sign or export a plugin or
-publish a GitHub release. Signing, export and any public release remain
-separate manual steps subject to the necessary authorization and review.
+Stable/nightly delivery, source-SHA checks, signature review, App provisioning
+and active server rules are documented in DEVELOPMENT.md. Zeron private keys
+are never placed in CI. The release App key authorizes GitHub operations only.

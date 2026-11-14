@@ -1,42 +1,54 @@
-# Release procedure
+# Publishing through protected delivery
 
-Repository: https://github.com/Energy-Quant/Iskra. Source publication is
-separate from releasing an installable signed plugin.
+Humans do not push main or create release/nightly tags. The authoritative
+policy is DEVELOPMENT.md, native GitHub rules and CI Gate.
 
-1. Wait for the matching commit's Iskra CI run to succeed. Download its
-   unsigned build artifact or build from that exact commit locally.
-2. Stage the unsigned plugin manually:
-   `scripts/stage-plugin.sh --dist dist/iskra-0.1.0`.
-   This preserves the previous installation outside the plugins directory.
-3. In Zeron Settings → Plugins → Iskra, review ownership and requested
-   permissions. The person chooses “It's mine…”/allow as appropriate.
-   If Zeron requires its consent window, use it; the CLI cannot bypass it.
-4. The person signs with `zeron plugin sign iskra`. Test the latest version
-   in Zeron: header/page artwork, statuses, en/ru/zh-Hans, auto/show/hide
-   provider settings and unavailable usage. Test desktop controls only
-   when explicitly enabled and with the companion installed.
-5. The person exports with `zeron plugin export iskra`. It reports the
-   output path (normally `~/.zeron/plugin-exports/iskra-0.1.0.zeron-plugin`).
-   Export signs the current folder again; avoid edits after smoke testing.
-6. Inspect the export against the reviewed staged tree, preserving the
-   four root license/provenance notices and SDK notice. Only the genuine
-   Zeron signature may differ from unsigned staging. Validate package
-   membership and checksum without printing its embedded data.
-7. Create tag/release v0.1.0 for the tested source commit. Attach the
-   inspected `.zeron-plugin`, real Linux companion tarball, optional `zeron-pet-bar-linux-x86_64`
-   bridge and SHA256SUMS.
-   Release notes state platforms, permissions, usage-data limits and the
-   distinction between local tests, hosted CI and live smoke results.
+## Before the next stable version
 
-The CI workflow does not publish a release, sign a plugin or grant consent.
-Never publish private key or `.state` files. No application is launched by
-headless verification; live testing and signing/export are human actions.
+Bump plugin/companion versions together through a feature-/bugfix- PR into
+dev. A Cargo.lock change requires the frozen Rust-license snapshot review,
+not an automatic hash rewrite. Merge dev into main through its green CI PR.
+Main is retested at its actual merge commit before delivery.
 
-## Verify the ordinary installation channel
+## Stable candidate and author export
 
-After publishing the signed release, remove the development-installed Iskra
-through Zeron Settings → Plugins, then use Install with the GitHub release
-URL (or its signed .zeron-plugin file). Review the signer/permissions and
-verify the installed files against the release. Do not remove the only
-signed local copy before exporting it. The author signs as the author;
-other users approve installation and permissions, not ownership.
+1. Provision the dedicated GitHub App as described in DEVELOPMENT.md.
+   Its key is only a GitHub authentication credential, not a Zeron signing key.
+2. Successful main CI can prepare a new version's draft automatically.
+   Alternatively dispatch Release delivery with operation `prepare` and the
+   successful main CI run ID. The workflow creates the tag and attaches
+   packages plus a clearly UNSIGNED review tree. Existing published versions
+   are never replaced; bump the version for another release.
+3. Download/review that exact staged plugin. The author stages it locally,
+   performs the live Zeron smoke test, signs/exports in Zeron and uploads the
+   single .zeron-plugin to the CI-created draft. Users never sign on the
+   author's behalf; no script bypasses consent. The author's own device
+   key is never uploaded to GitHub or passed to an agent.
+4. The hourly delivery check publishes a ready, correctly signed draft
+   automatically. For immediate delivery, dispatch `publish` with the same
+   successful main CI run ID. The candidate holds further main promotion while signing. CI checks
+   the current main SHA, complete CI Gate, matching platform payloads,
+   file hashes and the actual Ed25519 signature against reviewed public
+   signers. It then attaches OS-labelled packages/checksums, removes unsigned
+   candidate staging and publishes the immutable-version release.
+5. For an ordinary installation smoke test, preserve the author's export,
+   remove any development-installed copy through Zeron Settings, then Install
+   from the published GitHub release URL. The person approves permissions.
+   This tests the same signed package channel other users use.
+
+## Nightly
+
+Successful upstream dev CI produces an immutable nightly-<sha>-<run>
+prerelease when the App is configured. It contains UNSIGNED developer plugin
+staging, avatar tools and Linux native binaries. No production signature is
+invented and no nightly is presented as an installable signed plugin.
+
+## Fail-closed boundaries
+
+No App: native tag creation stays blocked and publication cannot run.
+Failed/skipped/cancelled gate, PR/fork artifacts, stale SHA, missing platform,
+changed payload, unknown/revoked-in-policy public key or invalid signature:
+no stable publication. Revoking a signing identity also requires removing
+its public key from the reviewed trust policy; runtime Zeron checks its
+own account/key status at installation. Native Windows/macOS desktop ports
+are not shipped by packaging a portable Luau plugin ZIP.

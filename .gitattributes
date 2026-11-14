@@ -1,2 +1,6 @@
-# Preserve upstream license texts byte-for-byte, including their whitespace.
-third_party/rust-licenses/** -whitespace
+# Source and generated code must have the same bytes on every runner.
+* text=auto eol=lf
+*.png binary
+*.gif binary
+# Frozen dependency texts retain upstream bytes and recorded hashes.
+third_party/rust-licenses/** -text -whitespace

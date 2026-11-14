@@ -1,0 +1,13 @@
+#!/usr/bin/env python3
+"""Local feedback only; GitHub rules remain authoritative."""
+import os
+import sys
+
+for line in sys.stdin:
+    local, local_sha, remote, remote_sha = line.split()
+    if remote == 'refs/heads/main':
+        sys.exit('Iskra: main receives dev only through CI/PR. Direct push is disabled.')
+    if remote.startswith('refs/tags/'):
+        sys.exit('Iskra: CI creates tags. Dispatch the release workflow instead.')
+    if remote == 'refs/heads/dev' and os.environ.get('ISKRA_CONFIRM_DEV_PUSH') != '1':
+        sys.exit('WARNING: direct dev push. Prefer feature-/bugfix- branches. Owner override: ISKRA_CONFIRM_DEV_PUSH=1 git push ...')
