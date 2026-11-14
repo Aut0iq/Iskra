@@ -17,8 +17,8 @@
 #
 # What it never does: sign anything, grant consent, touch Zeron's
 # .state/key material, or restart the engine. After staging, signing is
-# `zeron plugin sign iskra` (device key) or the consent sheet's
-# "It's mine…"; the "commands" permission for zeron-pet is granted only
+# the consent sheet's "It's mine…"; Zeron signs with the device key.
+# The "commands" permission for zeron-pet is granted only
 # by the person in Zeron.
 set -eu
 
@@ -96,11 +96,10 @@ cat <<EOF
 staged unsigned plugin -> $LIVE
 
 Next (manual — no script can grant consent):
-  1. sign with this device's key:  zeron plugin sign iskra
-     (or open the plugin's consent sheet in Zeron and choose
-     "It's mine…" — the "commands" permission for zeron-pet is
-     granted only by the person, in Zeron)
+  1. open Iskra in Zeron Settings > Plugins, review its version and
+     permissions, and choose "It's mine…" in Zeron's consent window.
+     Zeron signs with this device's key; CLI signing alone may be refused.
   2. export for distribution:  zeron plugin export iskra [--to <path>]
-     -> attach the .zeron-plugin to a GitHub release, or commit the
-     signed folder. See docs/PLUGIN.md.
+     -> attach the .zeron-plugin to the CI-created stable draft.
+     CI verifies the signature and reviewed payload. See docs/PUBLISHING.md.
 EOF
