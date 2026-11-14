@@ -13,7 +13,8 @@ def api(path, method='GET', data=None):
     args = ['gh', 'api', path, '--method', method]
     if data is not None:
         args += ['--input', '-']
-    return json.loads(subprocess.check_output(args, input=None if data is None else json.dumps(data).encode()))
+    response = subprocess.check_output(args, input=None if data is None else json.dumps(data).encode())
+    return json.loads(response) if response.strip() else {}
 
 
 def desired(app_id):
@@ -57,6 +58,11 @@ def main():
             path = f'repos/{REPO}/rulesets' + (f"/{current['id']}" if current else '')
             result = api(path, 'PUT' if current else 'POST', wanted)
             print(result['name'], result['enforcement'])
+    if args.check:
+        if not api(f'repos/{REPO}/immutable-releases').get('enabled'):
+            failures.append('immutable releases')
+    else:
+        api(f'repos/{REPO}/immutable-releases', 'PUT')
     if failures:
         p.error('rule drift: ' + ', '.join(failures))
     if not args.app_id:

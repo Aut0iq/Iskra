@@ -123,6 +123,11 @@ jobs:
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           APP_ID: ${{ vars.ISKRA_RELEASE_APP_ID }}
         run: |
+          pending="$(gh api "repos/$GH_REPO/releases?per_page=100" --jq '[.[]|select(.draft and (.tag_name|startswith("v")))]|length')"
+          if [ "$pending" != 0 ]; then
+            echo 'Stable draft pending: promotion is held until publication.'
+            exit 0
+          fi
           gh pr merge "$PR_NUMBER" --merge --match-head-commit "$HEAD_SHA"
           if [ -n "$APP_ID" ]; then
             gh api "repos/$GH_REPO/merges" --method POST -f base=dev -f head=main -f commit_message='Sync promoted main into dev'

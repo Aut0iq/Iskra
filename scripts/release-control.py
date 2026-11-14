@@ -35,10 +35,13 @@ def source_run(run, channel):
 
 def unzip(source, dest):
     with zipfile.ZipFile(source) as archive:
+        entries = archive.infolist()
+        if len(entries) > 2048 or len(entries) != len({entry.filename for entry in entries}):
+            raise ValueError('too many or duplicate artifact members')
         total = 0
-        for item in archive.infolist():
+        for item in entries:
             path = Path(item.filename)
-            if path.is_absolute() or '..' in path.parts or '\\' in item.filename or item.external_attr >> 16 & 0o170000 == 0o120000:
+            if path.is_absolute() or not path.parts or ':' in path.parts[0] or '..' in path.parts or '\\' in item.filename or item.external_attr >> 16 & 0o170000 == 0o120000:
                 raise ValueError('unsafe artifact ZIP')
             total += item.file_size
             if total > 128 * 1024 * 1024:
@@ -123,9 +126,13 @@ def main():
                           'Plugin and avatar tools: Windows, macOS, Linux. Native desktop: Linux/Wayland x86_64 only.\nAuthor signing remains local; CI verifies the Ed25519 signature and exact reviewed payload.\n'))
         if not release:
             command = ['release', 'create', tag, '--repo', REPO, '--target', run['head_sha'], '--title', tag, '--notes-file', str(notes)]
-            command += ['--prerelease'] if args.operation == 'nightly' else ['--draft']
+            command += ['--draft']
+            if args.operation == 'nightly':
+                command += ['--prerelease']
             gh(*command)
         gh('release', 'upload', tag, '--repo', REPO, '--clobber', *[str(p) for p in sorted(delivery.iterdir())])
+        if args.operation == 'nightly':
+            gh('release', 'edit', tag, '--repo', REPO, '--draft=false', '--prerelease', '--latest=false', '--notes-file', str(notes))
         if args.operation == 'publish':
             for a in release['assets']:
                 if 'UNSIGNED' in a['name']:

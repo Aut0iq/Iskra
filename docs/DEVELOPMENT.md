@@ -66,7 +66,14 @@ is new. Stable publication is dispatched only after an author-exported
 signed .zeron-plugin is attached to the draft. CI compares every payload
 byte, verifies Ed25519 against reviewed public signers, and checks the
 exact current-main CI run before publishing raw and OS-labelled packages.
+A stable candidate freezes promotion while the author reviews/exports it;
+publication resumes a held PR through CI rather than silently changing its
+source commit. The operator can also dispatch promotion to resume it.
 Published releases/tags are never overwritten by the delivery script.
+Native GitHub release immutability is enabled for future releases: all
+assets are uploaded to a draft before publication locks them. Existing
+v0.1.0 predates that repository setting and is not claimed retroactively
+immutable.
 
 Bump versions through a dev PR before the next stable release. Keep plugin
 and companion versions consistent. Changes to Cargo.lock require the
