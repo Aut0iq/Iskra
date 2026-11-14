@@ -62,8 +62,9 @@ separate engineering project.
 Successful dev CI can create immutable `nightly-<sha>-<run>` prereleases.
 Nightly plugin ZIPs are visibly UNSIGNED developer previews. No signing
 keys are on a runner. Main CI can prepare a stable draft when its version
-is new. Stable publication is dispatched only after an author-exported
-signed .zeron-plugin is attached to the draft. CI compares every payload
+is new. After the author attaches a signed .zeron-plugin to the draft, the hourly
+delivery check can publish automatically. Manual publish dispatch is also
+available for immediate delivery. CI compares every payload
 byte, verifies Ed25519 against reviewed public signers, and checks the
 exact current-main CI run before publishing raw and OS-labelled packages.
 A stable candidate freezes promotion while the author reviews/exports it;
@@ -95,8 +96,8 @@ regenerate texts. Current v0.1.0 remains intact during this preparation.
    update/deletion and main's required PR/CI checks remain unbypassable.
 4. Dispatch main CI. Once green, exercise draft preparation, then a dev
    nightly. In the release workflow choose `publish` only for a draft with
-   the correctly signed export. Stable publication also waits for the
-   `stable-release` environment's owner review.
+   the correctly signed export. The main-only stable-release environment prevents delivery from other refs;
+   signature verification is the author approval, without a second manual gate.
 
 Official references: [rulesets](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets),
 [branch restrictions](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches),

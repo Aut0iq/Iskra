@@ -387,8 +387,8 @@ def main(argv=None):
     print("     the 'commands' permission for zeron-pet is granted only")
     print("     by the person, in Zeron)")
     print("  3. export:  zeron plugin export iskra [--to <path>]")
-    print("  4. attach the .zeron-plugin to a GitHub release; people install")
-    print("     it from the release link or Settings -> Plugins -> Install…")
+    print("  4. attach the .zeron-plugin to the CI-created draft; delivery verifies")
+    print("     and publishes it. People install from the release or Plugins -> Install.")
     print("See docs/PLUGIN.md for the full checklist.")
     return 0
 

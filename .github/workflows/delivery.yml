@@ -3,6 +3,8 @@ on:
   workflow_run:
     workflows: [Iskra CI]
     types: [completed]
+  schedule:
+    - cron: '17 * * * *'
   workflow_dispatch:
     inputs:
       operation:
@@ -20,7 +22,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   deliver:
-    if: github.event_name == 'workflow_dispatch' || (vars.ISKRA_RELEASE_APP_ID != '' && github.event.workflow_run.conclusion == 'success' && contains(fromJSON('["main","dev"]'), github.event.workflow_run.head_branch) && contains(fromJSON('["push","workflow_dispatch"]'), github.event.workflow_run.event))
+    if: github.event_name == 'workflow_dispatch' || (vars.ISKRA_RELEASE_APP_ID != '' && github.event_name == 'schedule') || (vars.ISKRA_RELEASE_APP_ID != '' && github.event.workflow_run.conclusion == 'success' && contains(fromJSON('["main","dev"]'), github.event.workflow_run.head_branch) && contains(fromJSON('["push","workflow_dispatch"]'), github.event.workflow_run.event))
     runs-on: ubuntu-24.04
     environment: ${{ github.event_name == 'workflow_dispatch' && inputs.operation == 'publish' && 'stable-release' || 'release' }}
     steps:
@@ -50,6 +52,7 @@ jobs:
           REQUESTED_RUN: ${{ inputs.ci_run_id }}
           EVENT_BRANCH: ${{ github.event.workflow_run.head_branch }}
           EVENT_RUN: ${{ github.event.workflow_run.id }}
+          EVENT_NAME: ${{ github.event_name }}
         run: |
           operation="$REQUESTED_OPERATION"
           run="$REQUESTED_RUN"
@@ -57,4 +60,8 @@ jobs:
             run="$EVENT_RUN"
             if [ "$EVENT_BRANCH" = dev ]; then operation=nightly; else operation=prepare; fi
           fi
-          python3 scripts/release-control.py "$operation" --run "$run"
+          if [ "$EVENT_NAME" = schedule ]; then
+            python3 scripts/release-control.py auto
+          else
+            python3 scripts/release-control.py "$operation" --run "$run"
+          fi

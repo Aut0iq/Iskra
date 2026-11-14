@@ -19,10 +19,11 @@ main = api(repo + '/git/ref/heads/main')['object']['sha']
 if api(repo + '/git/commits/' + dev)['tree']['sha'] == api(repo + '/git/commits/' + main)['tree']['sha']:
     print('No content difference; do not create a promotion/synchronization loop.')
     raise SystemExit(0)
-runs = api(repo + '/actions/workflows/ci.yml/runs?branch=dev&status=success&per_page=50')['workflow_runs']
+runs = api(repo + '/actions/workflows/ci.yml/runs?branch=dev&per_page=50')['workflow_runs']
 run = next((r for r in runs if r['head_sha'] == dev and r['event'] in ('push', 'workflow_dispatch')), None)
-if run is None:
-    raise ValueError('current dev has no successful upstream CI')
+if run is None or run['conclusion'] != 'success':
+    print('Current dev is not green; wait for its latest CI.')
+    raise SystemExit(0)
 delivery.source_run(run, 'nightly')
 jobs = api(repo + f'/actions/runs/{run["id"]}/jobs?per_page=100')['jobs']
 if not any(j['name'] == 'CI Gate' and j['conclusion'] == 'success' for j in jobs):

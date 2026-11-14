@@ -24,8 +24,9 @@ Main is retested at its actual merge commit before delivery.
    single .zeron-plugin to the CI-created draft. Users never sign on the
    author's behalf; no script bypasses consent. The author's own device
    key is never uploaded to GitHub or passed to an agent.
-4. Dispatch Release delivery with operation `publish` and the same successful
-   main CI run ID. Review the stable-release environment request. The candidate holds further main promotion while signing. CI checks
+4. The hourly delivery check publishes a ready, correctly signed draft
+   automatically. For immediate delivery, dispatch `publish` with the same
+   successful main CI run ID. The candidate holds further main promotion while signing. CI checks
    the current main SHA, complete CI Gate, matching platform payloads,
    file hashes and the actual Ed25519 signature against reviewed public
    signers. It then attaches OS-labelled packages/checksums, removes unsigned
