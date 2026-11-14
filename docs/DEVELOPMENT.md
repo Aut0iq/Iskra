@@ -42,7 +42,11 @@ locale tests, packaging/installer fixtures, Ed25519 tamper checks, and
 portrait/pack tests. The portable job runs on Linux, Windows and macOS.
 An aggregate `CI Gate` rejects failures, cancellations and skipped jobs.
 
-Only a green upstream dev PR can be promoted to main by CI. Promotion
+With the App configured, green dev CI opens an upstream dev PR automatically
+when its content differs from main. Only that green PR can be promoted to
+main by CI. The App synchronizes the resulting main commit back into dev;
+equal content trees stop synchronization loops. During bootstrap the owner
+opens the dev PR, and CI still performs the merge. Promotion
 explicitly dispatches CI on the resulting main commit: a bot's merge does
 not automatically cause another push workflow. Contributor code never runs
 in the privileged delivery workflow; delivery checks out protected main.

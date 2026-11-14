@@ -8,8 +8,9 @@
    `.zeron-plugin` asset. Review who signed it and the permission request.
 3. Allow it in Zeron. Users do not claim ownership or sign someone else's plugin.
 
-The raw signed plugin is platform-independent. OS-labelled ZIPs package that
-same plugin with instructions. They do not contain a Windows/macOS native
+The raw signed plugin is platform-independent. The new delivery pipeline packages that
+same plugin with instructions in OS-labelled ZIPs; the existing v0.1.0
+release provides the raw portable plugin only. They do not contain a Windows/macOS native
 companion executable. Packaging runs on Windows, macOS and Linux in CI.
 
 If you developed Iskra locally, export and preserve your work first. Remove

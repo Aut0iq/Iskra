@@ -7,8 +7,10 @@ The original Iskra artwork remains CC BY 4.0 with attribution to Quant.
 ## Portrait mode
 
 Requires Python 3.12+ and Pillow (`python -m pip install Pillow==13.0.0`).
-On Windows, use `py -3` instead of `python3`. The downloadable avatar toolkit
+On Windows, use `py -3` instead of `python3`. The next-release avatar toolkit
 contains this CLI and the manifest template; it does not need GTK or Zeron.
+During stabilization, use a source checkout or the avatar-tools ZIP from
+the matching CI run. The older v0.1.0 release does not contain this toolkit.
 
 ```sh
 python3 scripts/avatars.py init --portrait my-avatar.png --output avatars/my-avatar \
