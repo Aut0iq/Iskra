@@ -7,8 +7,9 @@ scoped automation App. Do not grant broad upstream collaborator access and
 then pretend branch-creator isolation still exists.
 
 ```sh
-git fetch origin dev
-git switch -c feature-short-name origin/dev
+git remote add upstream https://github.com/Energy-Quant/Iskra.git  # once, for a fork
+git fetch upstream dev
+git switch -c feature-short-name upstream/dev
 git config core.hooksPath .githooks
 ```
 

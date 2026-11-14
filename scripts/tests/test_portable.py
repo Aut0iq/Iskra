@@ -3,6 +3,7 @@ import base64
 import importlib.util
 import json
 import os
+import shutil
 from pathlib import Path
 import subprocess
 import sys
@@ -60,6 +61,28 @@ class AvatarTests(unittest.TestCase):
         path.write_text(json.dumps(meta))
         with self.assertRaises(ValueError):
             avatars.validate(self.pack)
+
+    def test_unrecognized_metadata_cannot_introduce_commands(self):
+        path = self.pack / 'avatar.json'
+        meta = json.loads(path.read_text()); meta['exec'] = 'untrusted-program'
+        path.write_text(json.dumps(meta))
+        with self.assertRaises(ValueError): avatars.validate(self.pack)
+
+    def test_custom_plugin_carries_utf8_author_credit(self):
+        path = self.pack / 'avatar.json'
+        meta = json.loads(path.read_text()); meta['author'] = 'Лиса 雪'
+        path.write_text(json.dumps(meta))
+        repo = self.root / 'repo'
+        shutil.copytree(ROOT / 'plugin/iskra', repo / 'plugin/iskra', ignore=shutil.ignore_patterns('assets', '.assets*'))
+        for name in ('LICENSE', 'LICENSE-ARTWORK', 'ARTWORK.md', 'TRADEMARKS.md'):
+            shutil.copy2(ROOT / name, repo / name)
+        result = subprocess.run([sys.executable, str(ROOT / 'scripts/build-plugin.py'),
+                                 '--repo-root', str(repo), '--avatar', str(self.pack),
+                                 '--output', str(repo / 'dist'), '--wait', '0'], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        staged = next((repo / 'dist').glob('iskra-*')) / 'assets'
+        self.assertIn('Лиса 雪', (staged / 'ARTWORK.md').read_text(encoding='utf-8'))
+        self.assertEqual(json.loads((staged / 'avatar.json').read_text())['author'], 'Лиса 雪')
 
     def test_existing_output_preserved(self):
         with self.assertRaises(ValueError):

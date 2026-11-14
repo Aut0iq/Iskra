@@ -3,6 +3,7 @@
 import json
 import os
 import re
+import subprocess
 from pathlib import Path
 
 
@@ -25,5 +26,9 @@ def validate(event, repository='Energy-Quant/Iskra'):
 
 
 if __name__ == '__main__':
-    validate(json.loads(Path(os.environ['GITHUB_EVENT_PATH']).read_text()), os.getenv('GITHUB_REPOSITORY', 'Energy-Quant/Iskra'))
+    event = json.loads(Path(os.environ['GITHUB_EVENT_PATH']).read_text())
+    validate(event, os.getenv('GITHUB_REPOSITORY', 'Energy-Quant/Iskra'))
+    pr = event.get('pull_request')
+    if pr and pr['base']['ref'] == 'dev':
+        subprocess.run(['git', 'merge-base', '--is-ancestor', pr['base']['sha'], pr['head']['sha']], check=True)
     print('Branch policy PASS')

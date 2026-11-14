@@ -25,8 +25,8 @@
 # and the output is clearly marked as a fixture build.
 set -eu
 
-SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-REPO_ROOT=$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)
+SCRIPT_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+REPO_ROOT=$(CDPATH='' cd -- "$SCRIPT_DIR/.." && pwd)
 OUTPUT_DIR=""
 BINARY=""
 
@@ -62,18 +62,20 @@ VERSION=$(sed -n 's/^version = "\(.*\)"$/\1/p' "$REPO_ROOT/Cargo.toml" | head -n
 for f in LICENSE LICENSE-ARTWORK ARTWORK.md TRADEMARKS.md; do
     p="$REPO_ROOT/$f"
     [ -L "$p" ] && { echo "error: release file is a symlink: $p" >&2; exit 2; }
-    [ -f "$p" ] && [ -r "$p" ] || {
+    if [ ! -f "$p" ] || [ ! -r "$p" ]; then
         echo "error: required release file missing or not regular: $p" >&2
         exit 2
-    }
+    fi
 done
 
 # --- binary -------------------------------------------------------------
 FIXTURE=0
 if [ -n "$BINARY" ]; then
     FIXTURE=1
-    [ -f "$BINARY" ] && [ -x "$BINARY" ] || {
-        echo "error: --binary '$BINARY' is not an executable file" >&2; exit 2; }
+    if [ ! -f "$BINARY" ] || [ ! -x "$BINARY" ]; then
+        echo "error: --binary '$BINARY' is not an executable file" >&2
+        exit 2
+    fi
     if ! head -c 4 "$BINARY" | grep -q 'ELF'; then
         echo "warning: --binary is not an ELF; packaging it anyway (fixture mode)" >&2
     fi
