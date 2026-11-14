@@ -60,3 +60,30 @@ questions (`search`, `get_doc_context`, `trace_callers`/`trace_callees`).
 If Infigraph errors or returns an empty/read-only database, fall back
 to `grep`/reading files directly — currently the index reports a Kuzu
 read-only empty database, so grep is the working path.
+
+## Branches, CI and delivery (mandatory)
+
+- Never push main or create/move/delete release/nightly tags. All work starts
+  from dev in feature-name or bugfix-name. External contributors use forks;
+  upstream write ACL remains owner plus the scoped automation App.
+- PRs target dev. Only upstream dev may target main. CI performs promotion
+  after the required CI Gate succeeds. No bypass, force push or skipped gate.
+- A direct dev push is owner-only and exceptional: warn and require explicit
+  acknowledgement through the pre-push hook. Prefer PRs even for the owner.
+- Install the local hook with git config core.hooksPath .githooks. It is
+  feedback; native GitHub rules are the actual security boundary.
+- The dedicated automation App is required for strict CI-only tags/updates.
+  Never weaken rules to make a release succeed or use an owner's token as
+  the permanent bypass. If App provisioning is absent, publishing stays closed.
+- Stable tags/releases originate from current main and a fully green exact-SHA
+  CI run. Dev produces immutable nightly tags with UNSIGNED staging marked
+  as such. Never publish unsigned staging as an installable plugin.
+- Zeron signing/export and permission consent remain human-only. CI verifies
+  the public Ed25519 signature and exact reviewed payload, never signs.
+- Windows/macOS packages are portable Zeron plugins/avatar tools. The native
+  desktop companion is Linux/Wayland-only until an actual reviewed port.
+- Avatar packs are data/images only. Preserve authorship/licensing, validate
+  paths, alpha/dimensions and size, and reject symlinks or executable content.
+  Runtime theme/avatar switching is not shipped by defining a schema.
+- docs/DEVELOPMENT.md documents enforceable rules, administrative limits,
+  native App provisioning and the checks needed before each delivery.

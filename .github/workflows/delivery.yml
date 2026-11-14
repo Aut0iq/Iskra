@@ -1,0 +1,67 @@
+name: Release delivery
+on:
+  workflow_run:
+    workflows: [Iskra CI]
+    types: [completed]
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+    inputs:
+      operation:
+        type: choice
+        options: [prepare, publish, nightly]
+        required: true
+      ci_run_id:
+        description: Successful upstream main/dev Iskra CI run ID
+        required: true
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: delivery
+  cancel-in-progress: false
+jobs:
+  deliver:
+    if: github.event_name == 'workflow_dispatch' || (vars.ISKRA_RELEASE_APP_ID != '' && github.event_name == 'schedule') || (vars.ISKRA_RELEASE_APP_ID != '' && github.event.workflow_run.conclusion == 'success' && contains(fromJSON('["main","dev"]'), github.event.workflow_run.head_branch) && contains(fromJSON('["push","workflow_dispatch"]'), github.event.workflow_run.event))
+    runs-on: ubuntu-24.04
+    environment: ${{ github.event_name == 'workflow_dispatch' && inputs.operation == 'publish' && 'stable-release' || 'release' }}
+    steps:
+      # Privileged code always comes from protected main, never a fork/dev artifact.
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: main
+          persist-credentials: false
+      - name: Require the dedicated automation identity
+        env:
+          APP_ID: ${{ vars.ISKRA_RELEASE_APP_ID }}
+        run: |
+          test -n "$APP_ID" || { echo 'Provision the automation App; tag creation is intentionally blocked.' >&2; exit 1; }
+      - uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2
+        id: app
+        with:
+          app-id: ${{ vars.ISKRA_RELEASE_APP_ID }}
+          private-key: ${{ secrets.ISKRA_RELEASE_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: Iskra
+          permission-contents: write
+          permission-actions: write
+      - name: Verify and deliver
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          REQUESTED_OPERATION: ${{ inputs.operation }}
+          REQUESTED_RUN: ${{ inputs.ci_run_id }}
+          EVENT_BRANCH: ${{ github.event.workflow_run.head_branch }}
+          EVENT_RUN: ${{ github.event.workflow_run.id }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          operation="$REQUESTED_OPERATION"
+          run="$REQUESTED_RUN"
+          if [ -z "$run" ]; then
+            run="$EVENT_RUN"
+            if [ "$EVENT_BRANCH" = dev ]; then operation=nightly; else operation=prepare; fi
+          fi
+          if [ "$EVENT_NAME" = schedule ]; then
+            python3 scripts/release-control.py auto
+          else
+            python3 scripts/release-control.py "$operation" --run "$run"
+          fi

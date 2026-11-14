@@ -156,42 +156,11 @@ steps:
 
 ## Publishing workflow
 
-1. **License gate — decision settled, distribution checks pending.**
-   The owner approved MIT for code and developer documentation (root
-   `LICENSE`; copyright (c) 2026 Quant) and CC BY 4.0 for the Iskra
-   artwork (`LICENSE-ARTWORK`, `ARTWORK.md`; same holder, to the extent
-   rights are held). Third-party marks are excluded (`TRADEMARKS.md`). The reviewed
-   public snapshot excludes historical artwork and preserves the
-   provenance limitations in `docs/LICENSE_AUDIT.md`. `zeron.luau` already carries
-   Zeron's MIT attribution (see
-   `plugin/iskra/THIRD_PARTY_NOTICES.md`); that notice covers only the
-   vendored SDK. GTK and other runtime dependencies are system
-   libraries under their own licenses — do not claim the bundle is
-   uniformly MIT.
-2. Stage → sign → export:
-   ```sh
-   scripts/stage-plugin.sh --dist dist/iskra-0.1.0
-   # first adoption: person reviews "It's mine..." and permissions in Zeron
-   zeron plugin sign iskra            # signs with this device's key
-   zeron plugin export iskra --to dist/
-   # or the export_plugin MCP tool
-   ```
-   `export` re-signs your own plugin first, then writes one
-   `.zeron-plugin` file — `--to` takes a folder or a file name ending in
-   `.zeron-plugin`; without it the file lands in Zeron's
-   `plugin-exports/` data folder.
-3. Attach the `.zeron-plugin` to a GitHub release (or commit the signed
-   plugin folder to the repository). Install targets: release link,
-   `.zeron-plugin` file, or Settings → Plugins → Install….
-4. **Updates** install only when signed by the same key (or another
-   live key of the same account). New permissions still install but
-   wait for the user's allow; a plugin signed by a *new* key waits for
-   full re-consent. `update_plugin` only checks — the person installs.
-5. To show "by @username" the signing account must have a claimed Zeron
-   username; otherwise the plugin shows as Unverified to others.
-
-The public repository is https://github.com/Energy-Quant/Iskra.
-Publishing installable releases is a separate, deliberate step.
+Development branches target dev; only green dev CI promotes into main.
+Stable/nightly tags and delivery are created by the dedicated CI identity.
+The author alone reviews/signs/exports in Zeron; CI verifies the signed
+payload before publishing. Follow [PUBLISHING.md](PUBLISHING.md) and
+[DEVELOPMENT.md](DEVELOPMENT.md). Do not use the historical manual-tag path.
 
 ## Verification and release status
 

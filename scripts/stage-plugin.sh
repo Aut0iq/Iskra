@@ -38,7 +38,7 @@ die() { echo "error: $*" >&2; exit 2; }
 
 [ -n "$DIST" ] || die "--dist <staged folder> required"
 [ -d "$DIST" ] || die "staged folder not found: $DIST"
-DIST=$(CDPATH= cd -- "$DIST" && pwd -P)
+DIST=$(CDPATH='' cd -- "$DIST" && pwd -P)
 
 for f in zeron-plugin.json init.luau zeron.luau; do
     [ -f "$DIST/$f" ] || die "staged tree missing $f"

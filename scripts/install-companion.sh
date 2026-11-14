@@ -13,7 +13,7 @@
 #   ISKRA_DESKTOP_VERSION=x.y.z   override the version dir name
 set -eu
 
-SRC_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
+SRC_DIR=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd -P)
 PREFIX="$HOME/.local"
 
 while [ $# -gt 0 ]; do
@@ -31,8 +31,9 @@ die()  { echo "error: $*" >&2; exit 2; }
 # --- validate everything up front ----------------------------------------
 
 os=$(uname -s); arch=$(uname -m)
-[ "$os" = "Linux" ] && [ "$arch" = "x86_64" ] ||
+if [ "$os" != "Linux" ] || [ "$arch" != "x86_64" ]; then
     die "iskra-desktop supports Linux x86_64 (Wayland) only"
+fi
 
 # Required runtime: GTK4 + gtk4-layer-shell (checked via ldconfig when the
 # system provides it; absence of ldconfig is a warning, not a verdict).
@@ -68,7 +69,7 @@ printf '%s' "$VERSION" |
 # Prefix: must normalize to an absolute path (a relative one would make a
 # broken link target).
 mkdir -p "$PREFIX"
-PREFIX=$(CDPATH= cd -- "$PREFIX" && pwd -P)
+PREFIX=$(CDPATH='' cd -- "$PREFIX" && pwd -P)
 case "$PREFIX" in /*) : ;; *) die "could not resolve --prefix to an absolute path" ;; esac
 
 LIB_PARENT="$PREFIX/lib/iskra-desktop"
@@ -127,7 +128,8 @@ fi
 mkdir -p "$LIB_PARENT" "$BIN_DIR"
 TMP=$(mktemp -d "$LIB_PARENT/.stage-XXXXXX")
 trap 'rm -rf "$TMP"' EXIT INT TERM
-for item in bin assets README.md THIRD_PARTY_NOTICES.md install.sh; do
+for item in bin assets README.md THIRD_PARTY_NOTICES.md install.sh \
+    LICENSE LICENSE-ARTWORK ARTWORK.md TRADEMARKS.md licenses; do
     [ -e "$SRC_DIR/$item" ] && cp -a "$SRC_DIR/$item" "$TMP/$item"
 done
 printf '%s\n' "$VERSION" > "$TMP/$MARKER"
@@ -138,9 +140,13 @@ printf '%s\n' "$VERSION" > "$TMP/$MARKER"
 # place, so rollback never has to touch it.
 update_link() {
     ld=$(mktemp -d "$BIN_DIR/.link-XXXXXX") || return 1
-    ln -s "$DEST/bin/zeron-pet" "$ld/zeron-pet" &&
-        mv -T "$ld/zeron-pet" "$LINK" || { rm -rf "$ld"; return 1; }
-    rmdir "$ld"
+    if ln -s "$DEST/bin/zeron-pet" "$ld/zeron-pet" &&
+        mv -T "$ld/zeron-pet" "$LINK"; then
+        rmdir "$ld"
+    else
+        rm -rf "$ld"
+        return 1
+    fi
 }
 
 # Idempotent: an owned destination identical to the staged tree is a

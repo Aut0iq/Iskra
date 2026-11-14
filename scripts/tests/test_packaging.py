@@ -751,6 +751,15 @@ class InstallerTests(unittest.TestCase):
         self.assertFalse((self.tmp / ".config/systemd").exists())
         self.assertFalse((self.tmp / ".config/autostart").exists())
 
+    def test_installed_notices_and_dependency_snapshot_are_retained(self):
+        result = self._install()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        for name in ("LICENSE", "LICENSE-ARTWORK", "ARTWORK.md", "TRADEMARKS.md"):
+            self.assertEqual((self.dest / name).read_bytes(), (self.pkg / name).read_bytes())
+        for source in (self.pkg / "licenses").rglob("*"):
+            if source.is_file():
+                self.assertEqual((self.dest / "licenses" / source.relative_to(self.pkg / "licenses")).read_bytes(), source.read_bytes())
+
     def test_install_idempotent_no_backup(self):
         r1 = self._install()
         self.assertEqual(r1.returncode, 0, r1.stderr)
