@@ -20,6 +20,8 @@ jobs:
     env:
       CARGO_TERM_COLOR: always
       CARGO_INCREMENTAL: "0"
+      # The pinned C library is installed outside the distro linker paths.
+      RUSTFLAGS: "-L native=/usr/local/lib"
       SOURCE_DATE_EPOCH: "946684800"
       LUAU_COMMIT: 12a6ba75883272c79b66b59815efef4c574196f6
       LAYER_SHELL_COMMIT: 536ff516ed68b9bb34afc4c07f942a54b2b4b03f
