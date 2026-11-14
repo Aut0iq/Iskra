@@ -49,8 +49,10 @@ a pending source-branch gate cannot be bypassed by a faster PR run.
 The App synchronizes the resulting main commit back into dev;
 equal content trees stop synchronization loops. During bootstrap the owner
 opens the dev PR, and CI still performs the merge. Promotion
-explicitly dispatches CI on the resulting main commit: a bot's merge does
-not automatically cause another push workflow. Contributor code never runs
+uses the App-triggered push CI on the resulting main commit. Only bootstrap
+GITHUB_TOKEN merges explicitly dispatch CI because they do not emit another
+push workflow; the App path must not launch a duplicate and cancel its push CI.
+Contributor code never runs
 in the privileged delivery workflow; delivery checks out protected main.
 PR/fork artifacts cannot be a release source.
 
