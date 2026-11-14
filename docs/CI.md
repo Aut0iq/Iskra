@@ -24,6 +24,6 @@ was also used in local tests; the workflow currently runs Lua 5.4 only.
 
 The workflow uploads `dist/ci/` as an unsigned build artifact retained
 for seven days, including the unsigned plugin staging tree, companion
-tarball and tarball checksum. It does not sign or export a plugin or
+tarball, the optional ashell bridge executable and their checksums. It does not sign or export a plugin or
 publish a GitHub release. Signing, export and any public release remain
 separate manual steps subject to the necessary authorization and review.

@@ -109,8 +109,10 @@ jobs:
             echo "Refusing a fixture archive" >&2
             exit 1
           fi
+          cargo build --release --offline --locked --bin zeron-pet-bar
+          cp target/release/zeron-pet-bar dist/ci/zeron-pet-bar-linux-x86_64
           cd dist/ci
-          sha256sum iskra-desktop-*-linux-x86_64.tar.gz > SHA256SUMS
+          sha256sum iskra-desktop-*-linux-x86_64.tar.gz zeron-pet-bar-linux-x86_64 > SHA256SUMS
 
       # CI artifacts are not signed plugins or public GitHub Releases.
       - name: Upload Unsigned Build Artifacts

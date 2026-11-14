@@ -23,10 +23,20 @@ separate from releasing an installable signed plugin.
    Zeron signature may differ from unsigned staging. Validate package
    membership and checksum without printing its embedded data.
 7. Create tag/release v0.1.0 for the tested source commit. Attach the
-   inspected `.zeron-plugin`, real Linux companion tarball and SHA256SUMS.
+   inspected `.zeron-plugin`, real Linux companion tarball, optional `zeron-pet-bar-linux-x86_64`
+   bridge and SHA256SUMS.
    Release notes state platforms, permissions, usage-data limits and the
    distinction between local tests, hosted CI and live smoke results.
 
 The CI workflow does not publish a release, sign a plugin or grant consent.
 Never publish private key or `.state` files. No application is launched by
 headless verification; live testing and signing/export are human actions.
+
+## Verify the ordinary installation channel
+
+After publishing the signed release, remove the development-installed Iskra
+through Zeron Settings → Plugins, then use Install with the GitHub release
+URL (or its signed .zeron-plugin file). Review the signer/permissions and
+verify the installed files against the release. Do not remove the only
+signed local copy before exporting it. The author signs as the author;
+other users approve installation and permissions, not ownership.

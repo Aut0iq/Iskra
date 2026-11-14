@@ -219,39 +219,38 @@ private test captures are not distributed.
 
 ## Installing the plugin
 
-Until a signed release is available, use the source-build instructions
-below. Unsigned CI artifacts require the author's review/signing in Zeron.
-The repository is [Energy-Quant/Iskra](https://github.com/Energy-Quant/Iskra).
+Use Zeron Settings → Plugins → Install and open the
+[latest release](https://github.com/Energy-Quant/Iskra/releases/latest),
+or install its signed `iskra-0.1.0.zeron-plugin` file. Review the signer
+and requested permissions in Zeron. A release becomes installable only
+after its signed plugin asset is attached; unsigned CI artifacts are
+not an end-user installation channel.
 
+The plugin works by itself. It does not install a desktop companion or
+an operating-system tray entry. Its optional desktop buttons control
+`zeron-pet` only when that companion is separately installed and the
+person grants the `commands` permission.
 
-Packaging, signing and the publishing checklist (including the license
-gate) are documented in `docs/PLUGIN.md`. In short:
-
-```sh
-python3 scripts/build-plugin.py        # plugin/iskra/assets + dist/iskra-0.1.0/
-scripts/build-companion.sh             # dist/iskra-desktop-0.1.0-linux-x86_64.tar.gz
-python3 scripts/tests/test_packaging.py
-scripts/stage-plugin.sh --dist dist/iskra-0.1.0
-```
-
-The staged plugin is unsigned. Signing (`zeron plugin sign iskra`, or
-the consent sheet's "It's mine…") is distinct from consent: a first
-adoption can require Zeron's own consent window before the CLI will
-sign, and permissions — including `commands` for `zeron-pet` — are
-granted only by the person, in Zeron. Nothing here grants consent,
-signs on the user's behalf, or touches Zeron's `.state`/key material.
+For developers building from source, run `python3 scripts/build-plugin.py`
+and follow `docs/PUBLISHING.md`. Only the person signs/exports and grants
+consent in Zeron; scripts do not replace that review.
 
 ## Installing the companion
 
-`scripts/build-companion.sh` produces
-`dist/iskra-desktop-<version>-linux-x86_64.tar.gz`: the `zeron-pet`
-binary, the V6 frames its manifest references, `install.sh` and
-notices. The installer copies the tree to
-`<prefix>/lib/iskra-desktop/<version>` and links
-`<prefix>/bin/zeron-pet` to it (default prefix `~/.local`). It is
-transactional — refuses non-owned destinations and foreign `zeron-pet`
-links, preserves older managed versions — and installs no autostart and
-starts nothing.
+Download `iskra-desktop-0.1.0-linux-x86_64.tar.gz` and `SHA256SUMS` from
+the same GitHub release. Verify its checksum, extract it and run
+`./install.sh` inside `iskra-desktop-0.1.0/`. This installs the versioned
+package under `~/.local/lib/iskra-desktop/` and the stable executable
+`~/.local/bin/zeron-pet`. It does not start anything or add autostart.
+
+Launch the installed executable. Avoid old development `run.sh` scripts
+and `target/release` paths: those can still contain older artwork. Updates
+use a new release package and the same transactional installer.
+
+An optional ashell bridge is provided as the separate release asset
+`zeron-pet-bar-linux-x86_64`. It controls the installed executable, never
+a source checkout. See [ASHELL.md](docs/ASHELL.md). This integration is
+optional and independent of installing the Zeron plugin.
 
 ## Licensing
 
