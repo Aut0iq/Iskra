@@ -99,6 +99,7 @@ jobs:
     needs: gate
     if: github.event_name == 'pull_request' && github.base_ref == 'main' && github.head_ref == 'dev' && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-24.04
+    timeout-minutes: 15
     permissions:
       contents: write
       pull-requests: write
@@ -128,6 +129,8 @@ jobs:
             echo 'Stable draft pending: promotion is held until publication.'
             exit 0
           fi
+          # The dev push and PR have separate gates; either may finish first.
+          gh pr checks "$PR_NUMBER" --required --watch --fail-fast --interval 10
           gh pr merge "$PR_NUMBER" --merge --match-head-commit "$HEAD_SHA"
           if [ -n "$APP_ID" ]; then
             gh api "repos/$GH_REPO/merges" --method POST -f base=dev -f head=main -f commit_message='Sync promoted main into dev'

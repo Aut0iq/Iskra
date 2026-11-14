@@ -44,7 +44,9 @@ An aggregate `CI Gate` rejects failures, cancellations and skipped jobs.
 
 With the App configured, green dev CI opens an upstream dev PR automatically
 when its content differs from main. Only that green PR can be promoted to
-main by CI. The App synchronizes the resulting main commit back into dev;
+main by CI. Promotion waits for required checks on both the dev push and PR;
+a pending source-branch gate cannot be bypassed by a faster PR run.
+The App synchronizes the resulting main commit back into dev;
 equal content trees stop synchronization loops. During bootstrap the owner
 opens the dev PR, and CI still performs the merge. Promotion
 explicitly dispatches CI on the resulting main commit: a bot's merge does
