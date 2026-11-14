@@ -20,7 +20,7 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
       - run: python3 scripts/branch-policy.py
-      - if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+      - if: github.event_name == 'push' && github.ref == 'refs/heads/dev' && github.actor == 'Energy-Quant'
         run: echo "::warning::Owner push to dev. Prefer feature-/bugfix- PRs for reviewable changes."
   linux:
     uses: ./.github/workflows/linux.yml
@@ -65,10 +65,22 @@ jobs:
           path: dist/packages/
           if-no-files-found: error
           retention-days: 14
+  contents:
+    name: Artifact contract
+    needs: [linux, portable]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          path: dist/contracts
+      - run: python3 scripts/check-artifacts.py dist/contracts
   gate:
     name: CI Gate
     if: always()
-    needs: [policy, linux, portable]
+    needs: [policy, linux, portable, contents]
     runs-on: ubuntu-24.04
     steps:
       - env:
@@ -109,6 +121,10 @@ jobs:
           GH_REPO: ${{ github.repository }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          APP_ID: ${{ vars.ISKRA_RELEASE_APP_ID }}
         run: |
           gh pr merge "$PR_NUMBER" --merge --match-head-commit "$HEAD_SHA"
+          if [ -n "$APP_ID" ]; then
+            gh api "repos/$GH_REPO/merges" --method POST -f base=dev -f head=main -f commit_message='Sync promoted main into dev'
+          fi
           gh workflow run ci.yml --ref main

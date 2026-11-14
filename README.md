@@ -1,45 +1,35 @@
 # Iskra ✦
 
-![Iskra](docs/media/iskra.gif)
+<img src="docs/media/iskra.gif" alt="Iskra, the raspberry flame" width="160">
 
-A small raspberry flame for your coding desk. Iskra is a plugin for
-[Zeron](https://zeron.sh) that shows agent status and cached usage, with an
-optional Linux desktop companion. She watches the build; she cannot fix
-it by glaring harder. Yet.
+A small neon companion for [Zeron](https://zeron.sh): agent status, cached
+usage and an optional Linux desktop pet. She watches the build. Glaring at
+red CI is a personality trait, not a repair strategy.
 
 ## Install
 
-In **Zeron → Settings → Plugins → Install**, open the
-[latest stable release](https://github.com/Energy-Quant/Iskra/releases/latest)
-or choose its signed `.zeron-plugin` file. Review the author and permissions.
+**Zeron → Settings → Plugins → Install** →
+[latest stable release](https://github.com/Energy-Quant/Iskra/releases/latest),
+or select its signed `.zeron-plugin` file. Review the author and permissions.
 
-The plugin is portable across Zeron hosts. Windows/macOS packages contain
-the plugin and avatar tools; the separate desktop pet requires Linux/Wayland.
-[Installation details](docs/INSTALLATION.md) · [Desktop & ashell](docs/ASHELL.md)
+The plugin/avatar tools are portable; the separate desktop pet requires
+Linux/Wayland. [Full installation guide](docs/INSTALLATION.md) ·
+[Desktop & ashell](docs/ASHELL.md) · [Make your avatar](docs/AVATARS.md)
 
-## Make it yours
-
-Bring a transparent portrait, get an avatar pack. Animated packs work too.
-[Avatar guide](docs/AVATARS.md) · [Personalization roadmap](docs/PERSONALIZATION.md)
-
-## Build together
-
-`feature-*` / `bugfix-*` → `dev` → green CI → `main`.
-[Contributing](CONTRIBUTING.md) · [Delivery rules](docs/DEVELOPMENT.md)
-Nightlies are unsigned developer previews. Stable releases need the author's
-signed export. No secret signing keys taking a holiday on a runner.
+Building with us? [Contributing](CONTRIBUTING.md) · [Development & delivery](docs/DEVELOPMENT.md).
+Nightlies are unsigned developer previews. Stable signing keys stay home.
 
 ## Thanks to
 
 [Zeron](https://github.com/zeronsh/zeron), [Rust](https://www.rust-lang.org/),
-[GTK](https://www.gtk.org/) and the people building the open-source tools
-under this tiny neon campfire.
+[GTK](https://www.gtk.org/) and the open-source people keeping this little
+raspberry campfire alive.
 
 ## Licenses
 
 Code/docs: [MIT](LICENSE). Original artwork: [CC BY 4.0](LICENSE-ARTWORK),
-with [attribution and provenance notes](ARTWORK.md). Third-party notices
-stay with their owners. Your avatar needs your own rights and credits.
+with [attribution and provenance notes](ARTWORK.md). Third-party notices stay
+with their owners; your avatar needs its own rights and credits.
 
 ## Star history
 

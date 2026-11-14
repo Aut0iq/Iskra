@@ -108,10 +108,13 @@ def main():
             spec = importlib.util.spec_from_file_location('verify', ROOT / 'scripts/verify-signed-plugin.py')
             verify = importlib.util.module_from_spec(spec); spec.loader.exec_module(verify)
             verify.verify(package, unsigned, json.loads((ROOT / '.github/trusted-signers.json').read_text()))
+            spec = importlib.util.spec_from_file_location('portable', ROOT / 'scripts/package-portable.py')
+            portable = importlib.util.module_from_spec(spec); spec.loader.exec_module(portable)
             for platform in ('linux', 'windows', 'macos'):
-                with zipfile.ZipFile(delivery / f'iskra-plugin-{platform}.zip', 'w', zipfile.ZIP_DEFLATED) as z:
-                    z.write(package, package.name)
-                    z.writestr('INSTALL.txt', 'Install the .zeron-plugin in Zeron Settings > Plugins. Review permissions. Desktop companion is Linux-only.\n')
+                wrapper = root / ('wrapper-' + platform); wrapper.mkdir()
+                shutil.copyfile(package, wrapper / package.name)
+                (wrapper / 'INSTALL.txt').write_text('Install the .zeron-plugin in Zeron Settings > Plugins. Review permissions. Desktop companion is Linux-only.\n', encoding='utf-8', newline='\n')
+                portable.package(wrapper, delivery / f'iskra-plugin-{platform}.zip')
         import hashlib
         (delivery / 'SHA256SUMS').write_text(''.join(hashlib.sha256(p.read_bytes()).hexdigest() + '  ' + p.name + '\n' for p in sorted(delivery.iterdir()) if p.is_file()))
         notes = root / 'NOTES.md'

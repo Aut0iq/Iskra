@@ -1,0 +1,35 @@
+name: Open green dev promotion
+on:
+  workflow_run:
+    workflows: [Iskra CI]
+    types: [completed]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: promote-dev
+  cancel-in-progress: false
+jobs:
+  open-pr:
+    if: vars.ISKRA_RELEASE_APP_ID != '' && (github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'dev'))
+    runs-on: ubuntu-24.04
+    environment: release
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2
+        id: app
+        with:
+          app-id: ${{ vars.ISKRA_RELEASE_APP_ID }}
+          private-key: ${{ secrets.ISKRA_RELEASE_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: Iskra
+          permission-contents: read
+          permission-pull-requests: write
+          permission-actions: read
+      - env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+        run: python3 scripts/promote.py

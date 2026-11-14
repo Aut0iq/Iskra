@@ -27,11 +27,11 @@ def validate(folder):
     if meta.get('mode') not in ('portrait', 'animated'):
         raise ValueError('avatar mode must be portrait or animated')
     prefs = meta.get('personalization', {'schema': 1, 'theme': None})
-    if not isinstance(prefs, dict) or set(prefs) - {'schema', 'theme'} or prefs.get('schema') != 1:
+    if not isinstance(prefs, dict) or set(prefs) - {'schema', 'theme'} or type(prefs.get('schema')) is not int or prefs.get('schema') != 1:
         raise ValueError('unsupported personalization metadata')
-    if prefs.get('theme') is not None and not re.fullmatch(r'[a-z0-9][a-z0-9-]{0,47}', str(prefs['theme'])):
+    if prefs.get('theme') is not None and (not isinstance(prefs['theme'], str) or not re.fullmatch(r'[a-z0-9][a-z0-9-]{0,47}', prefs['theme'])):
         raise ValueError('theme is an ID, not a path or URL')
-    if not re.fullmatch(r'[a-z0-9][a-z0-9-]{0,47}', meta.get('id', '')):
+    if not isinstance(meta.get('id'), str) or not re.fullmatch(r'[a-z0-9][a-z0-9-]{0,47}', meta['id']):
         raise ValueError('invalid avatar id')
     for key in ('name', 'author', 'license', 'attribution'):
         if not isinstance(meta.get(key), str) or not meta[key].strip() or len(meta[key]) > 1024:
