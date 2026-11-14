@@ -248,7 +248,6 @@ fn spawn_reader_impl(
 mod tests {
     use super::*;
     use serde_json::json;
-    use std::os::unix::fs::PermissionsExt;
 
     fn tmpdir(tag: &str) -> PathBuf {
         let d = std::env::temp_dir().join(format!(
@@ -265,10 +264,23 @@ mod tests {
 
     fn fake_cli(dir: &Path, name: &str, body: &str) -> PathBuf {
         let p = dir.join(name);
-        std::fs::write(&p, format!("#!/bin/sh\n{body}\n")).unwrap();
-        let mut perms = std::fs::metadata(&p).unwrap().permissions();
-        perms.set_mode(0o755);
-        std::fs::set_permissions(&p, perms).unwrap();
+        // Other test threads fork concurrently. Keep the executable's write
+        // descriptor out of this process so their children cannot inherit it
+        // and cause ETXTBSY after the creating thread has closed its copy.
+        let mut writer = Command::new("/bin/sh")
+            .args(["-c", "cat > \"$1\" && chmod 755 \"$1\"", "fixture-writer"])
+            .arg(&p)
+            .stdin(Stdio::piped())
+            .spawn()
+            .unwrap();
+        let write = writer
+            .stdin
+            .take()
+            .unwrap()
+            .write_all(format!("#!/bin/sh\n{body}\n").as_bytes());
+        let status = writer.wait().unwrap();
+        write.unwrap();
+        assert!(status.success(), "fixture writer failed: {status}");
         p
     }
 
@@ -319,11 +331,11 @@ done"#,
     fn probe_rejects_bad_json_eof_oversize_and_wrong_ids_still_works() {
         let dir = tmpdir("bad");
         let cases = [
-            ("garbage", "printf 'this is not json\\n'\nsleep 60"),
+            ("garbage", "printf 'this is not json\\n'\nexec sleep 60"),
             ("eof", "head -n 1 >/dev/null\nexit 0"),
             (
                 "oversize",
-                "head -c 1100000 /dev/zero | tr '\\0' 'x'\nsleep 60",
+                "head -c 1100000 /dev/zero | tr '\\0' 'x'\nexec sleep 60",
             ),
         ];
         for (name, body) in cases {
@@ -386,7 +398,7 @@ done"#,
         assert!(!status.success(), "timed-out child must be reaped");
 
         // Stop cancels promptly, well before the 15s deadline.
-        let cli2 = fake_cli(&dir, "slow2", "sleep 60");
+        let cli2 = fake_cli(&dir, "slow2", "exec sleep 60");
         let stop2 = Arc::new(AtomicBool::new(false));
         let stop_c = stop2.clone();
         std::thread::spawn(move || {
