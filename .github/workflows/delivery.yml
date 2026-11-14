@@ -45,6 +45,7 @@ jobs:
           repositories: Iskra
           permission-contents: write
           permission-actions: write
+          permission-workflows: write
       - name: Verify and deliver
         env:
           GH_TOKEN: ${{ steps.app.outputs.token }}

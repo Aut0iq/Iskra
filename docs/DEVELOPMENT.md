@@ -44,7 +44,9 @@ An aggregate `CI Gate` rejects failures, cancellations and skipped jobs.
 
 With the App configured, green dev CI opens an upstream dev PR automatically
 when its content differs from main. Only that green PR can be promoted to
-main by CI. The App synchronizes the resulting main commit back into dev;
+main by CI. Promotion waits for required checks on both the dev push and PR;
+a pending source-branch gate cannot be bypassed by a faster PR run.
+The App synchronizes the resulting main commit back into dev;
 equal content trees stop synchronization loops. During bootstrap the owner
 opens the dev PR, and CI still performs the merge. Promotion
 explicitly dispatches CI on the resulting main commit: a bot's merge does
@@ -85,8 +87,11 @@ regenerate texts. Current v0.1.0 remains intact during this preparation.
 
 1. Register a private GitHub App under Energy-Quant using
    `.github/automation-app-manifest.json` as the permission specification.
-   Disable webhooks; install it on Iskra only. Contents/actions/PR write are
-   sufficient; it needs no account-wide access or Zeron permissions.
+   Disable webhooks; install it on Iskra only. Grant contents/actions/PR/workflows
+   write and checks read for observing required gates. GitHub requires workflows
+   write when a release/tag targets dev with workflow changes relative to main;
+   contents write alone cannot deliver those nightlies. It needs no account-wide
+   access or Zeron permissions.
 2. Generate its private key in GitHub's UI. The person stores it directly
    as Actions secret `ISKRA_RELEASE_APP_PRIVATE_KEY`; the agent never reads
    it. Add repository variable `ISKRA_RELEASE_APP_ID` with the public App ID.
