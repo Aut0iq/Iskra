@@ -104,6 +104,7 @@ jobs:
       contents: write
       pull-requests: write
       actions: write
+      checks: read
     steps:
       - uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2
         id: app
