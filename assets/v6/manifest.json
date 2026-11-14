@@ -1,0 +1,694 @@
+{
+  "version": 2,
+  "profile": "iskra-v6",
+  "frame_width": 256,
+  "frame_height": 256,
+  "logical_width": 160,
+  "logical_height": 160,
+  "animations": {
+    "standing_idle": {
+      "frames": [
+        "build-20261111T042939Z-11c9ba45/frames/standing_idle/00.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_idle/01.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_idle/02.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_idle/03.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_idle/04.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_idle/05.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_idle/06.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_idle/07.png"
+      ],
+      "frame_ms": 170,
+      "playback": "loop",
+      "contact": [
+        128,
+        248
+      ]
+    },
+    "standing_focus_laptop": {
+      "frames": [
+        "build-20261111T042939Z-11c9ba45/frames/standing_focus_laptop/00.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_focus_laptop/01.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_focus_laptop/02.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_focus_laptop/03.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_focus_laptop/04.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_focus_laptop/05.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_focus_laptop/06.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_focus_laptop/07.png"
+      ],
+      "frame_ms": 120,
+      "playback": "loop",
+      "contact": [
+        128,
+        248
+      ]
+    },
+    "standing_focus_solder": {
+      "frames": [
+        "build-20261111T042939Z-11c9ba45/frames/standing_focus_solder/00.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_focus_solder/01.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_focus_solder/02.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_focus_solder/03.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_focus_solder/04.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_focus_solder/05.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_focus_solder/06.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_focus_solder/07.png"
+      ],
+      "frame_ms": 130,
+      "playback": "loop",
+      "contact": [
+        128,
+        248
+      ]
+    },
+    "standing_question": {
+      "frames": [
+        "build-20261111T042939Z-11c9ba45/frames/standing_question/00.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_question/01.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_question/02.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_question/03.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_question/04.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_question/05.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_question/06.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_question/07.png"
+      ],
+      "frame_ms": 150,
+      "playback": "loop",
+      "contact": [
+        128,
+        248
+      ]
+    },
+    "standing_joy": {
+      "frames": [
+        "build-20261111T042939Z-11c9ba45/frames/standing_joy/00.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_joy/01.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_joy/02.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_joy/03.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_joy/04.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_joy/05.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_joy/06.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_joy/07.png"
+      ],
+      "frame_ms": 120,
+      "playback": "loop",
+      "contact": [
+        128,
+        248
+      ]
+    },
+    "standing_anger": {
+      "frames": [
+        "build-20261111T042939Z-11c9ba45/frames/standing_anger/00.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_anger/01.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_anger/02.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_anger/03.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_anger/04.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_anger/05.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_anger/06.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_anger/07.png"
+      ],
+      "frame_ms": 130,
+      "playback": "loop",
+      "contact": [
+        128,
+        248
+      ]
+    },
+    "standing_sadness": {
+      "frames": [
+        "build-20261111T042939Z-11c9ba45/frames/standing_sadness/00.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_sadness/01.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_sadness/02.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_sadness/03.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_sadness/04.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_sadness/05.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_sadness/06.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_sadness/07.png"
+      ],
+      "frame_ms": 190,
+      "playback": "loop",
+      "contact": [
+        128,
+        248
+      ]
+    },
+    "standing_blush": {
+      "frames": [
+        "build-20261111T042939Z-11c9ba45/frames/standing_blush/00.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_blush/01.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_blush/02.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_blush/03.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_blush/04.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_blush/05.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_blush/06.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_blush/07.png"
+      ],
+      "frame_ms": 160,
+      "playback": "loop",
+      "contact": [
+        128,
+        248
+      ]
+    },
+    "standing_dance_back": {
+      "frames": [
+        "build-20261111T042939Z-11c9ba45/frames/standing_dance_back/00.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_dance_back/01.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_dance_back/02.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_dance_back/03.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_dance_back/04.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_dance_back/05.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_dance_back/06.png",
+        "build-20261111T042939Z-11c9ba45/frames/standing_dance_back/07.png"
+      ],
+      "frame_ms": 130,
+      "playback": "loop",
+      "contact": [
+        128,
+        248
+      ]
+    },
+    "floor_idle": {
+      "frames": [
+        "build-20261111T042939Z-11c9ba45/frames/floor_idle/00.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_idle/01.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_idle/02.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_idle/03.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_idle/04.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_idle/05.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_idle/06.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_idle/07.png"
+      ],
+      "frame_ms": 170,
+      "playback": "loop",
+      "contact": [
+        128,
+        248
+      ]
+    },
+    "floor_focus_laptop": {
+      "frames": [
+        "build-20261111T042939Z-11c9ba45/frames/floor_focus_laptop/00.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_focus_laptop/01.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_focus_laptop/02.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_focus_laptop/03.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_focus_laptop/04.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_focus_laptop/05.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_focus_laptop/06.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_focus_laptop/07.png"
+      ],
+      "frame_ms": 120,
+      "playback": "loop",
+      "contact": [
+        128,
+        248
+      ]
+    },
+    "floor_focus_solder": {
+      "frames": [
+        "build-20261111T042939Z-11c9ba45/frames/floor_focus_solder/00.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_focus_solder/01.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_focus_solder/02.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_focus_solder/03.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_focus_solder/04.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_focus_solder/05.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_focus_solder/06.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_focus_solder/07.png"
+      ],
+      "frame_ms": 130,
+      "playback": "loop",
+      "contact": [
+        128,
+        248
+      ]
+    },
+    "floor_question": {
+      "frames": [
+        "build-20261111T042939Z-11c9ba45/frames/floor_question/00.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_question/01.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_question/02.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_question/03.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_question/04.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_question/05.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_question/06.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_question/07.png"
+      ],
+      "frame_ms": 150,
+      "playback": "loop",
+      "contact": [
+        128,
+        248
+      ]
+    },
+    "floor_joy": {
+      "frames": [
+        "build-20261111T042939Z-11c9ba45/frames/floor_joy/00.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_joy/01.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_joy/02.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_joy/03.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_joy/04.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_joy/05.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_joy/06.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_joy/07.png"
+      ],
+      "frame_ms": 120,
+      "playback": "loop",
+      "contact": [
+        128,
+        248
+      ]
+    },
+    "floor_anger": {
+      "frames": [
+        "build-20261111T042939Z-11c9ba45/frames/floor_anger/00.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_anger/01.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_anger/02.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_anger/03.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_anger/04.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_anger/05.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_anger/06.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_anger/07.png"
+      ],
+      "frame_ms": 130,
+      "playback": "loop",
+      "contact": [
+        128,
+        248
+      ]
+    },
+    "floor_sadness": {
+      "frames": [
+        "build-20261111T042939Z-11c9ba45/frames/floor_sadness/00.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_sadness/01.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_sadness/02.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_sadness/03.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_sadness/04.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_sadness/05.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_sadness/06.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_sadness/07.png"
+      ],
+      "frame_ms": 190,
+      "playback": "loop",
+      "contact": [
+        128,
+        248
+      ]
+    },
+    "floor_blush": {
+      "frames": [
+        "build-20261111T042939Z-11c9ba45/frames/floor_blush/00.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_blush/01.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_blush/02.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_blush/03.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_blush/04.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_blush/05.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_blush/06.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_blush/07.png"
+      ],
+      "frame_ms": 160,
+      "playback": "loop",
+      "contact": [
+        128,
+        248
+      ]
+    },
+    "floor_dance_back": {
+      "frames": [
+        "build-20261111T042939Z-11c9ba45/frames/floor_dance_back/00.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_dance_back/01.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_dance_back/02.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_dance_back/03.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_dance_back/04.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_dance_back/05.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_dance_back/06.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_dance_back/07.png"
+      ],
+      "frame_ms": 130,
+      "playback": "loop",
+      "contact": [
+        128,
+        248
+      ]
+    },
+    "wall_left_idle": {
+      "frames": [
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_idle/00.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_idle/01.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_idle/02.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_idle/03.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_idle/04.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_idle/05.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_idle/06.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_idle/07.png"
+      ],
+      "frame_ms": 170,
+      "playback": "loop",
+      "contact": [
+        8,
+        248
+      ]
+    },
+    "wall_left_focus_laptop": {
+      "frames": [
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_focus_laptop/00.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_focus_laptop/01.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_focus_laptop/02.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_focus_laptop/03.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_focus_laptop/04.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_focus_laptop/05.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_focus_laptop/06.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_focus_laptop/07.png"
+      ],
+      "frame_ms": 120,
+      "playback": "loop",
+      "contact": [
+        8,
+        248
+      ]
+    },
+    "wall_left_focus_solder": {
+      "frames": [
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_focus_solder/00.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_focus_solder/01.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_focus_solder/02.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_focus_solder/03.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_focus_solder/04.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_focus_solder/05.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_focus_solder/06.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_focus_solder/07.png"
+      ],
+      "frame_ms": 130,
+      "playback": "loop",
+      "contact": [
+        8,
+        248
+      ]
+    },
+    "wall_left_question": {
+      "frames": [
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_question/00.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_question/01.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_question/02.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_question/03.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_question/04.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_question/05.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_question/06.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_question/07.png"
+      ],
+      "frame_ms": 150,
+      "playback": "loop",
+      "contact": [
+        8,
+        248
+      ]
+    },
+    "wall_left_joy": {
+      "frames": [
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_joy/00.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_joy/01.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_joy/02.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_joy/03.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_joy/04.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_joy/05.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_joy/06.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_joy/07.png"
+      ],
+      "frame_ms": 120,
+      "playback": "loop",
+      "contact": [
+        8,
+        248
+      ]
+    },
+    "wall_left_anger": {
+      "frames": [
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_anger/00.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_anger/01.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_anger/02.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_anger/03.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_anger/04.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_anger/05.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_anger/06.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_anger/07.png"
+      ],
+      "frame_ms": 130,
+      "playback": "loop",
+      "contact": [
+        8,
+        248
+      ]
+    },
+    "wall_left_sadness": {
+      "frames": [
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_sadness/00.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_sadness/01.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_sadness/02.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_sadness/03.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_sadness/04.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_sadness/05.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_sadness/06.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_sadness/07.png"
+      ],
+      "frame_ms": 190,
+      "playback": "loop",
+      "contact": [
+        8,
+        248
+      ]
+    },
+    "wall_left_blush": {
+      "frames": [
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_blush/00.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_blush/01.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_blush/02.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_blush/03.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_blush/04.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_blush/05.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_blush/06.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_blush/07.png"
+      ],
+      "frame_ms": 160,
+      "playback": "loop",
+      "contact": [
+        8,
+        248
+      ]
+    },
+    "wall_left_dance_back": {
+      "frames": [
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_dance_back/00.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_dance_back/01.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_dance_back/02.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_dance_back/03.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_dance_back/04.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_dance_back/05.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_dance_back/06.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_left_dance_back/07.png"
+      ],
+      "frame_ms": 130,
+      "playback": "loop",
+      "contact": [
+        8,
+        248
+      ]
+    },
+    "wall_right_idle": {
+      "frames": [
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_idle/00.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_idle/01.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_idle/02.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_idle/03.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_idle/04.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_idle/05.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_idle/06.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_idle/07.png"
+      ],
+      "frame_ms": 170,
+      "playback": "loop",
+      "contact": [
+        248,
+        248
+      ]
+    },
+    "wall_right_focus_laptop": {
+      "frames": [
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_focus_laptop/00.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_focus_laptop/01.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_focus_laptop/02.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_focus_laptop/03.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_focus_laptop/04.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_focus_laptop/05.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_focus_laptop/06.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_focus_laptop/07.png"
+      ],
+      "frame_ms": 120,
+      "playback": "loop",
+      "contact": [
+        248,
+        248
+      ]
+    },
+    "wall_right_focus_solder": {
+      "frames": [
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_focus_solder/00.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_focus_solder/01.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_focus_solder/02.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_focus_solder/03.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_focus_solder/04.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_focus_solder/05.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_focus_solder/06.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_focus_solder/07.png"
+      ],
+      "frame_ms": 130,
+      "playback": "loop",
+      "contact": [
+        248,
+        248
+      ]
+    },
+    "wall_right_question": {
+      "frames": [
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_question/00.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_question/01.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_question/02.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_question/03.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_question/04.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_question/05.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_question/06.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_question/07.png"
+      ],
+      "frame_ms": 150,
+      "playback": "loop",
+      "contact": [
+        248,
+        248
+      ]
+    },
+    "wall_right_joy": {
+      "frames": [
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_joy/00.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_joy/01.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_joy/02.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_joy/03.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_joy/04.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_joy/05.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_joy/06.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_joy/07.png"
+      ],
+      "frame_ms": 120,
+      "playback": "loop",
+      "contact": [
+        248,
+        248
+      ]
+    },
+    "wall_right_anger": {
+      "frames": [
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_anger/00.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_anger/01.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_anger/02.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_anger/03.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_anger/04.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_anger/05.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_anger/06.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_anger/07.png"
+      ],
+      "frame_ms": 130,
+      "playback": "loop",
+      "contact": [
+        248,
+        248
+      ]
+    },
+    "wall_right_sadness": {
+      "frames": [
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_sadness/00.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_sadness/01.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_sadness/02.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_sadness/03.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_sadness/04.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_sadness/05.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_sadness/06.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_sadness/07.png"
+      ],
+      "frame_ms": 190,
+      "playback": "loop",
+      "contact": [
+        248,
+        248
+      ]
+    },
+    "wall_right_blush": {
+      "frames": [
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_blush/00.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_blush/01.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_blush/02.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_blush/03.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_blush/04.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_blush/05.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_blush/06.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_blush/07.png"
+      ],
+      "frame_ms": 160,
+      "playback": "loop",
+      "contact": [
+        248,
+        248
+      ]
+    },
+    "wall_right_dance_back": {
+      "frames": [
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_dance_back/00.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_dance_back/01.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_dance_back/02.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_dance_back/03.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_dance_back/04.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_dance_back/05.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_dance_back/06.png",
+        "build-20261111T042939Z-11c9ba45/frames/wall_right_dance_back/07.png"
+      ],
+      "frame_ms": 130,
+      "playback": "loop",
+      "contact": [
+        248,
+        248
+      ]
+    },
+    "dragged": {
+      "frames": [
+        "build-20261111T042939Z-11c9ba45/frames/dragged/00.png",
+        "build-20261111T042939Z-11c9ba45/frames/dragged/01.png",
+        "build-20261111T042939Z-11c9ba45/frames/dragged/02.png",
+        "build-20261111T042939Z-11c9ba45/frames/dragged/03.png",
+        "build-20261111T042939Z-11c9ba45/frames/dragged/04.png",
+        "build-20261111T042939Z-11c9ba45/frames/dragged/05.png",
+        "build-20261111T042939Z-11c9ba45/frames/dragged/06.png",
+        "build-20261111T042939Z-11c9ba45/frames/dragged/07.png"
+      ],
+      "frame_ms": 110,
+      "playback": "loop",
+      "contact": [
+        128,
+        248
+      ]
+    },
+    "floor_recline": {
+      "frames": [
+        "build-20261111T042939Z-11c9ba45/frames/floor_recline/00.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_recline/01.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_recline/02.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_recline/03.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_recline/04.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_recline/05.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_recline/06.png",
+        "build-20261111T042939Z-11c9ba45/frames/floor_recline/07.png"
+      ],
+      "frame_ms": 200,
+      "playback": "loop",
+      "contact": [
+        128,
+        248
+      ]
+    }
+  }
+}

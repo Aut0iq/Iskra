@@ -1,0 +1,49 @@
+{
+  "page": {
+    "home": "Iskra"
+  },
+  "iskra": {
+    "alt": "Iskra, the companion"
+  },
+  "status": {
+    "awaitingInput": "Needs an answer",
+    "errored": "Errored",
+    "working": "Working",
+    "completed": "Done",
+    "unknown": "Unknown",
+    "idle": "Idle",
+    "none": "No chats"
+  },
+  "usage": {
+    "title": "Agent usage",
+    "empty": "No active providers to show.",
+    "no_windows": "No usage windows reported.",
+    "provider_unavailable": "{name} isn't reporting usage to Zeron — nothing to measure.",
+    "note": "Usage comes from Zeron. Some plans, including OpenCode Go/Zen, may not expose limits. Show lists missing providers as unavailable.",
+    "stale": "stale",
+    "read_error": "Couldn't read usage: {why}",
+    "reset_pending": "a window reset — waiting for a fresh reading",
+    "bad_timestamp": "unrecognised timestamp: {raw}",
+    "error_prefix": "error: "
+  },
+  "chats": {
+    "title": "Chats",
+    "open": "Open",
+    "empty": "No chats yet."
+  },
+  "desktop": {
+    "title": "Desktop pet",
+    "hint": "These buttons run zeron-pet as you, on this device (Linux/Wayland helper). If it isn't installed, the packaged companion's install.sh puts zeron-pet on your PATH — building alone (cargo build / ./run.sh) does not. The pet is a separate program: it keeps running if this plugin is turned off, and its own --status output is the truth.",
+    "never": "Nothing run yet.",
+    "running": "Running…",
+    "exit": "exit {code}",
+    "refused": "Refused: {why}",
+    "start": "Start",
+    "pause": "Pause",
+    "resume": "Resume",
+    "live": "Live",
+    "restore_clicks": "Restore clicks",
+    "stop": "Stop",
+    "status": "Status"
+  }
+}

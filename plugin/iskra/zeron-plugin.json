@@ -1,0 +1,125 @@
+{
+  "id": "iskra",
+  "name": "Iskra",
+  "version": "0.1.0",
+  "description": "Iskra in Zeron: an animated companion mirroring chat status, agent usage as Zeron last read it, and opt-in controls for the separate zeron-pet desktop helper.",
+  "icon": "icon.svg",
+  "entry": "init.luau",
+  "settings_description": "Iskra's home in Zeron: a companion in the header, her own page, your agents' usage, and opt-in desktop pet controls.",
+  "permissions": [
+    "ui.add",
+    "sessions.read",
+    "usage.read",
+    "pages.add",
+    "navigate",
+    "commands"
+  ],
+  "commands": [
+    "zeron-pet"
+  ],
+  "settings": [
+    {
+      "id": "show_header",
+      "kind": "switch",
+      "label": "Iskra in the header",
+      "description": "A small animated Iskra and the chat's status by a chat's header.",
+      "default": true,
+      "section": "Companion"
+    },
+    {
+      "id": "animate",
+      "kind": "switch",
+      "label": "Animate",
+      "description": "Play Iskra's animations. Off holds a still frame; Zeron's reduced-motion setting also holds it still.",
+      "default": true,
+      "section": "Companion"
+    },
+    {
+      "id": "show_usage",
+      "kind": "switch",
+      "label": "Agent usage",
+      "description": "Show each active provider's usage windows on Iskra's page, as Zeron last read them.",
+      "default": true,
+      "section": "Companion"
+    },
+    {
+      "id": "desktop_controls",
+      "kind": "switch",
+      "label": "Desktop pet controls",
+      "description": "Buttons that run the separate zeron-pet helper (Linux/Wayland). Nothing runs until you click.",
+      "default": false,
+      "section": "Desktop"
+    },
+    {
+      "id": "usage_codex",
+      "kind": "choice",
+      "style": "segmented",
+      "label": "Codex",
+      "description": "Codex's usage row on Iskra's page.",
+      "options": [
+        { "value": "auto", "label": "Auto", "description": "Shown when Zeron reports usage for it." },
+        { "value": "show", "label": "Show", "description": "Always listed; marked unavailable when Zeron reports nothing." },
+        { "value": "hide", "label": "Hide", "description": "Never listed, even when Zeron reports usage." }
+      ],
+      "default": "auto",
+      "section": "Agent usage"
+    },
+    {
+      "id": "usage_devin",
+      "kind": "choice",
+      "style": "segmented",
+      "label": "Devin",
+      "description": "Devin's usage row on Iskra's page.",
+      "options": [
+        { "value": "auto", "label": "Auto", "description": "Shown when Zeron reports usage for it." },
+        { "value": "show", "label": "Show", "description": "Always listed; marked unavailable when Zeron reports nothing." },
+        { "value": "hide", "label": "Hide", "description": "Never listed, even when Zeron reports usage." }
+      ],
+      "default": "auto",
+      "section": "Agent usage"
+    },
+    {
+      "id": "usage_opencode",
+      "kind": "choice",
+      "style": "segmented",
+      "label": "OpenCode",
+      "description": "OpenCode's usage row on Iskra's page.",
+      "options": [
+        { "value": "auto", "label": "Auto", "description": "Shown when Zeron reports usage for it." },
+        { "value": "show", "label": "Show", "description": "Always listed; marked unavailable when Zeron reports nothing." },
+        { "value": "hide", "label": "Hide", "description": "Never listed, even when Zeron reports usage." }
+      ],
+      "default": "auto",
+      "section": "Agent usage"
+    },
+    {
+      "id": "usage_claude_code",
+      "kind": "choice",
+      "style": "segmented",
+      "label": "Claude Code",
+      "description": "Claude Code's usage row on Iskra's page.",
+      "options": [
+        { "value": "auto", "label": "Auto", "description": "Shown when Zeron reports usage for it." },
+        { "value": "show", "label": "Show", "description": "Always listed; marked unavailable when Zeron reports nothing." },
+        { "value": "hide", "label": "Hide", "description": "Never listed, even when Zeron reports usage." }
+      ],
+      "default": "auto",
+      "section": "Agent usage"
+    },
+    {
+      "id": "language",
+      "kind": "choice",
+      "style": "select",
+      "label": "Language",
+      "description": "The language of Iskra's own texts. Auto follows Zeron's language; it never changes Zeron's.",
+      "options": [
+        { "value": "auto", "label": "Auto" },
+        { "value": "en", "label": "English" },
+        { "value": "ru", "label": "Русский" },
+        { "value": "zh-Hans", "label": "简体中文" }
+      ],
+      "default": "auto",
+      "section": "Language"
+    }
+  ]
+}

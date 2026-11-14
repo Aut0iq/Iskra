@@ -1,0 +1,2 @@
+# Preserve upstream license texts byte-for-byte, including their whitespace.
+third_party/rust-licenses/** -whitespace

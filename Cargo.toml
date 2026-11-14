@@ -1,0 +1,32 @@
+[package]
+name = "zeron-pet"
+version = "0.1.0"
+edition = "2021"
+description = "Independent transparent Wayland desktop pet reporting Zeron chat status"
+license = "MIT"
+build = "build.rs"
+
+[lib]
+name = "zeron_pet"
+path = "src/lib.rs"
+
+[[bin]]
+name = "zeron-pet"
+path = "src/main.rs"
+
+[[bin]]
+name = "zeron-pet-prepare-assets"
+path = "src/bin/prepare_assets.rs"
+
+[dependencies]
+gtk4 = "0.9.7"
+gio = { version = "0.20.12", features = ["v2_80"] }
+gdk-pixbuf = "0.20.10"
+cairo-rs = "0.20.12"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+image = { version = "0.25", default-features = false, features = ["png"] }
+gif = "0.13.3"
+libc = "0.2"
+log = "0.4"
+env_logger = "0.11"

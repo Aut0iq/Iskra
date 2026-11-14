@@ -1,0 +1,49 @@
+{
+  "page": {
+    "home": "Iskra"
+  },
+  "iskra": {
+    "alt": "Iskra，你的小伙伴"
+  },
+  "status": {
+    "awaitingInput": "等待回复",
+    "errored": "出错",
+    "working": "工作中",
+    "completed": "完成",
+    "unknown": "未知",
+    "idle": "空闲",
+    "none": "没有聊天"
+  },
+  "usage": {
+    "title": "代理用量",
+    "empty": "没有可显示的活跃提供商。",
+    "no_windows": "未报告用量窗口。",
+    "provider_unavailable": "{name} 未向 Zeron 报告用量——没有可度量的数据。",
+    "note": "用量数据来自 Zeron。某些套餐（包括 OpenCode Go/Zen）可能不会暴露限额。“显示”会把缺失的提供商标记为不可用。",
+    "stale": "已过期",
+    "read_error": "无法读取用量：{why}",
+    "reset_pending": "窗口已重置——等待新的读数",
+    "bad_timestamp": "无法识别的时间戳：{raw}",
+    "error_prefix": "错误："
+  },
+  "chats": {
+    "title": "聊天",
+    "open": "打开",
+    "empty": "还没有聊天。"
+  },
+  "desktop": {
+    "title": "桌面宠物",
+    "hint": "这些按钮以你的身份在本机运行 zeron-pet（Linux/Wayland 助手）。如果尚未安装，打包版伴侣程序的 install.sh 会把 zeron-pet 加入 PATH——仅构建（cargo build / ./run.sh）不会。宠物是独立程序：关闭本插件它仍会继续运行，其自身的 --status 输出才是真实状态。",
+    "never": "尚未运行任何命令。",
+    "running": "运行中…",
+    "exit": "退出码 {code}",
+    "refused": "被拒绝：{why}",
+    "start": "启动",
+    "pause": "暂停",
+    "resume": "继续",
+    "live": "实时状态",
+    "restore_clicks": "恢复点击",
+    "stop": "停止",
+    "status": "状态"
+  }
+}

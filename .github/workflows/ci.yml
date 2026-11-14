@@ -1,0 +1,120 @@
+name: Iskra CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Headless Checks And Unsigned Builds
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      CARGO_TERM_COLOR: always
+      CARGO_INCREMENTAL: "0"
+      SOURCE_DATE_EPOCH: "946684800"
+      LUAU_COMMIT: 12a6ba75883272c79b66b59815efef4c574196f6
+      LAYER_SHELL_COMMIT: 536ff516ed68b9bb34afc4c07f942a54b2b4b03f
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Check Out Sources
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Install Build Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y \
+            build-essential cmake curl pkg-config lua5.4 python3 meson ninja-build \
+            libgtk-4-dev libwayland-dev wayland-protocols \
+            libgdk-pixbuf-2.0-dev libcairo2-dev
+          rustup toolchain install stable --profile minimal --component rustfmt,clippy
+          rustup default stable
+          rustc --version
+          cargo --version
+
+      - name: Build Pinned GTK4 Layer Shell
+        run: |
+          source_dir="$RUNNER_TEMP/iskra-layer-shell"
+          mkdir -p "$source_dir"
+          curl --fail --location --retry 3 \
+            "https://github.com/wmww/gtk4-layer-shell/archive/$LAYER_SHELL_COMMIT.tar.gz" \
+            -o "$RUNNER_TEMP/iskra-layer-shell.tar.gz"
+          tar -xzf "$RUNNER_TEMP/iskra-layer-shell.tar.gz" \
+            --strip-components=1 -C "$source_dir"
+          meson setup "$source_dir/build" "$source_dir" \
+            --prefix=/usr/local --libdir=lib \
+            -Dexamples=false -Ddocs=false -Dtests=false -Dsmoke-tests=false \
+            -Dintrospection=false -Dvapi=false
+          meson compile -C "$source_dir/build"
+          sudo meson install -C "$source_dir/build"
+          sudo ldconfig
+
+      - name: Build Pinned Luau Compiler
+        run: |
+          source_dir="$RUNNER_TEMP/iskra-luau"
+          mkdir -p "$source_dir"
+          curl --fail --location --retry 3 \
+            "https://github.com/luau-lang/luau/archive/$LUAU_COMMIT.tar.gz" \
+            -o "$RUNNER_TEMP/iskra-luau.tar.gz"
+          tar -xzf "$RUNNER_TEMP/iskra-luau.tar.gz" \
+            --strip-components=1 -C "$source_dir"
+          cmake -S "$source_dir" -B "$source_dir/build" \
+            -DCMAKE_BUILD_TYPE=Release -DLUAU_BUILD_TESTS=OFF -DLUAU_BUILD_WEB=OFF
+          cmake --build "$source_dir/build" --target Luau.Compile.CLI --parallel 2
+          echo "$source_dir/build" >> "$GITHUB_PATH"
+
+      - name: Fetch Locked Rust Dependencies
+        run: cargo fetch --locked
+
+      - name: Check Rust
+        run: |
+          cargo fmt --check
+          cargo test --offline --locked
+          cargo clippy --offline --locked --all-targets -- -D warnings
+
+      - name: Check Plugin And Packaging
+        run: |
+          lua5.4 plugin/iskra/tests/model_test.lua
+          lua5.4 plugin/iskra/tests/i18n_test.lua
+          python3 plugin/iskra/tests/locales_test.py
+          python3 scripts/tests/test_packaging.py
+
+      - name: Stage Unsigned Plugin And Parse Luau
+        run: |
+          python3 scripts/build-plugin.py --wait 0 --output dist/ci
+          find plugin/iskra -type f \( -name '*.luau' -o -name '*.lua' \) \
+            ! -path '*/.assets.*' -print0 \
+            | sort -z | xargs -0 -r luau-compile --only-parse
+
+      - name: Build Desktop Companion Without Launching
+        run: |
+          scripts/build-companion.sh --output dist/ci
+          tar -tzf dist/ci/iskra-desktop-*-linux-x86_64.tar.gz \
+            > "$RUNNER_TEMP/iskra-tar-members.txt"
+          if grep -q '/FIXTURE-BUILD.txt$' "$RUNNER_TEMP/iskra-tar-members.txt"; then
+            echo "Refusing a fixture archive" >&2
+            exit 1
+          fi
+          cd dist/ci
+          sha256sum iskra-desktop-*-linux-x86_64.tar.gz > SHA256SUMS
+
+      # CI artifacts are not signed plugins or public GitHub Releases.
+      - name: Upload Unsigned Build Artifacts
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: iskra-unsigned-linux-x86_64-${{ github.run_id }}
+          path: dist/ci/
+          if-no-files-found: error
+          retention-days: 7
