@@ -147,6 +147,9 @@ def main():
         notes.write_text(f'Source: {run["head_sha"]}\nCI: {run["html_url"]}\n\n' +
                          ('UNSIGNED developer preview. Not an installable signed Zeron plugin.\n' if args.operation == 'nightly' else
                           'Plugin and avatar tools: Windows, macOS, Linux. Native desktop: Linux/Wayland x86_64 only.\nAuthor signing remains local; CI verifies the Ed25519 signature and exact reviewed payload.\n'))
+        release_notes = ROOT / 'docs/releases' / (version + '.md')
+        if args.operation != 'nightly' and release_notes.is_file():
+            notes.write_text(release_notes.read_text(encoding='utf-8') + '\n\n' + notes.read_text(encoding='utf-8'), encoding='utf-8')
         if not release:
             command = ['release', 'create', tag, '--repo', REPO, '--target', run['head_sha'], '--title', tag, '--notes-file', str(notes)]
             command += ['--draft']
