@@ -134,7 +134,9 @@ jobs:
           fi
           # The dev push and PR have separate gates; either may finish first.
           gh pr checks "$PR_NUMBER" --required --watch --fail-fast --interval 10
-          gh pr merge "$PR_NUMBER" --merge --match-head-commit "$HEAD_SHA"
+          gh api "repos/$GH_REPO/pulls/$PR_NUMBER/merge" --method PUT \
+            -f merge_method=merge -f sha="$HEAD_SHA" \
+            --jq 'if .merged then .sha else error(.message) end'
           if [ -n "$APP_ID" ]; then
             gh api "repos/$GH_REPO/merges" --method POST -f base=dev -f head=main -f commit_message='Sync promoted main into dev'
           fi
