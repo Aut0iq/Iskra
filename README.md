@@ -1,288 +1,46 @@
-# Iskra
+# Iskra ✦
 
-![Iskra — the animated companion: idling, celebrating, dancing](docs/media/iskra.gif)
+![Iskra](docs/media/iskra.gif)
 
-Iskra is a desktop companion for Zeron chat status, built as two parts:
+A small raspberry flame for your coding desk. Iskra is a plugin for
+[Zeron](https://zeron.sh) that shows agent status and cached usage, with an
+optional Linux desktop companion. She watches the build; she cannot fix
+it by glaring harder. Yet.
 
-- a **native Zeron plugin** (`plugin/iskra/`): an animated Iskra inside
-  Zeron's own window — a chat-status mirror, an Iskra sidebar page, and
-  agent usage as Zeron last read it — running inside Zeron's plugin
-  sandbox under its consent model;
-- an **optional desktop companion** (`zeron-pet`, the Rust app in this
-  repository): a transparent, always-on-top smooth 2D illustrated
-  character for
-  Linux/Wayland that reads live chat status from the local Zeron
-  engine. It never patches Zeron, never touches its database, and
-  reserves no desktop space.
+## Install
 
-The companion is standalone: it runs with or without the plugin, and
-the plugin keeps working when the pet is not installed. The plugin can
-also control an installed companion through Zeron's `commands`
-permission — always and only as the user, after the user allows it.
+In **Zeron → Settings → Plugins → Install**, open the
+[latest stable release](https://github.com/Energy-Quant/Iskra/releases/latest)
+or choose its signed `.zeron-plugin` file. Review the author and permissions.
 
-## Requirements (desktop companion)
+The plugin is portable across Zeron hosts. Windows/macOS packages contain
+the plugin and avatar tools; the separate desktop pet requires Linux/Wayland.
+[Installation details](docs/INSTALLATION.md) · [Desktop & ashell](docs/ASHELL.md)
 
-- Linux, Wayland: Hyprland/wlroots compositor (wlr layer-shell; anything
-  else exits with an explicit "unsupported compositor" message — X11 is
-  not claimed).
-- GTK4 + gtk4-layer-shell installed.
-- The `zeron` CLI for read-only MCP status polling (`zeron mcp`).
-  Resolution order: `ISKRA_ZERON` override (used verbatim), then the
-  first executable file among `~/.local/bin/zeron` and
-  `~/.zeron/app/current/zeron`, otherwise `zeron` on PATH.
+## Make it yours
 
-## Build & run
+Bring a transparent portrait, get an avatar pack. Animated packs work too.
+[Avatar guide](docs/AVATARS.md) · [Personalization roadmap](docs/PERSONALIZATION.md)
 
-Install Rust, GTK4 development libraries, gtk4-layer-shell and
-Wayland development libraries first (see `docs/CI.md` for the build
-recipe). Fetch the pinned Rust dependencies once before offline builds:
+## Build together
 
-```sh
-cargo fetch --locked
-```
+`feature-*` / `bugfix-*` → `dev` → green CI → `main`.
+[Contributing](CONTRIBUTING.md) · [Delivery rules](docs/DEVELOPMENT.md)
+Nightlies are unsigned developer previews. Stable releases need the author's
+signed export. No secret signing keys taking a holiday on a runner.
 
-```sh
-./run.sh                      # cargo build --release --offline, then run
-./run.sh --monitor eDP-1      # pin to an output
-./run.sh --assets /path/to/assets --scale 3
-```
+## Thanks to
 
-The app is a GTK single instance: a second invocation forwards control
-commands to the running one, which is also the recovery path for
-click-through:
+[Zeron](https://github.com/zeronsh/zeron), [Rust](https://www.rust-lang.org/),
+[GTK](https://www.gtk.org/) and the people building the open-source tools
+under this tiny neon campfire.
 
-```sh
-zeron-pet --status            # one-line state summary
-zeron-pet --pause | --resume  # animation playback control
-zeron-pet --click-through on  # pointer events fall through to windows below
-zeron-pet --click-through off # recover input without clicking the pet
-zeron-pet --demo joy          # display-only pose (never live status)
-zeron-pet --demo blush        # display-only click-blush reaction
-zeron-pet --demo dragged      # display-only drag reaction pose
-zeron-pet --pose floor        # display-only support pose
-                              # (standing|floor|wall-left|wall-right)
-zeron-pet --cycle-demo
-zeron-pet --live              # clear demo/pose overrides, keep live status
-zeron-pet --quit
-```
+## Licenses
 
-`--pose` and the `blush`/`dragged` demos are control-only: sent to a
-running pet they never launch a new instance, and `--live` clears them.
-The semantic chat status shown in the badge and `--status` output is
-never affected by demo or pose overrides.
+Code/docs: [MIT](LICENSE). Original artwork: [CC BY 4.0](LICENSE-ARTWORK),
+with [attribution and provenance notes](ARTWORK.md). Third-party notices
+stay with their owners. Your avatar needs your own rights and credits.
 
-Pointer controls: a click (under 8 logical px of movement) makes the pet
-blush; left-drag moves and pins the pet and releases can snap it to the
-floor or either side of the screen; middle-click toggles animation
-playback; the pet never roams. Right-click opens a scrollable chat list
-and controls (pause, click-through, quit). Selecting a chat narrows
-status aggregation to it and its children.
+## Star history
 
-## Status semantics
-
-Per `docs/ARCHITECTURE.md`: awaitingInput → question; errored → anger for
-6s per new episode, then sadness; working → focus (laptop/soldering props
-alternate every 12s); newly completed unseen result → joy; otherwise idle.
-Stale reports are unknown, disconnection is sadness + an explicit badge,
-and old completed history is never celebrated.
-
-Independently of the visual emotion, the semantic status kind is one of
-`Работает` / `Нужен ответ` / `Готово` / `Ошибка` / `Отдыхает` /
-`Статус неизвестен` / `Нет связи` (precedence: disconnected → awaiting →
-error → working → completed → unknown → idle). It drives the badge text,
-the `status=` token in `--status` output (alongside `placement=` and
-`reaction=`), and the ashell bar label, and is never overwritten by demo,
-reaction, or pose overrides.
-
-The surface hides whenever a mapped fullscreen client is on a visible
-workspace of the pet's output (active or special workspace), and hides
-conservatively whenever compositor state cannot be determined.
-
-## Status HUD
-
-The status badge and the usage gauges live on a **separate layer-shell
-surface** (`zeron-pet-hud`, top layer, no keyboard focus, no exclusive
-zone) so they never cover Iskra's artwork. The HUD is a fixed 216px-wide
-content-sized window on the same monitor as the sprite; it is placed
-beside the sprite with an 8px gap, trying right → left → above → below,
-clamped fully inside the monitor's usable rectangle. The exclusion
-shape is the current animation's measured artwork envelope (the union
-of its frames' opaque bounds, expanded 2px and clipped to the window),
-not the whole sprite square, so the HUD hugs the silhouette rather than
-floating a window-width away; a missing or empty bounds entry falls
-back to the full square. If no non-overlapping placement exists, the
-HUD hides instead of covering the pet. Both surfaces share one
-visibility decision, and click-through empties the input regions of
-both.
-
-The panel follows the outrun-pixel/retrowave palette (angular 0-radius
-frame, 2px amber border with a pink status accent, offset pixel shadow,
-subtle scanlines, Pixelon with Noto Sans Mono fallback).
-
-## Subscription usage gauges
-
-Inside the HUD, below the status lines, two compact rows show quota
-windows for Devin (amber/orange) then Codex (pink/red): `24ч 0%`,
-`7д 79%` / `5ч`, `7д` above a 4px square progress track per window.
-Percentages are **used**, not remaining — `79%` means 79% of the
-window's quota is consumed. Provider names and window tags stay at full
-size on the fixed-width HUD regardless of the sprite's frame size
-(96x128, 160x160, 320x320); tooltips carry the same details.
-
-Data primarily comes from Zeron's already-refreshed normalized cache at
-`~/.zeron/agent-accounts/usage-cache.json` (`ISKRA_USAGE_CACHE`
-overrides the path for tests). A background thread re-reads it every
-~2s and the GTK side re-renders at most every ~250ms when the snapshot
-changes; the pet never reads credentials or session logs and never
-spends quota.
-
-For Codex only, when the Zeron cache entry is unhealthy (e.g. persisted
-`no-credentials`), the pet additionally probes the locally installed
-`codex` CLI directly: it spawns a short-lived `codex app-server`,
-performs a bounded read-only JSON-RPC exchange
-(`initialize`/`initialized`/`account/rateLimits/read`), then kills and
-reaps the child. Probes run at most once per 60s while needed, never
-while the Zeron cache is healthy, and never when the cache reports
-ambiguous accounts. The whole Codex provider row is sourced from either
-Zeron or the direct probe — windows are never spliced between sources.
-The probe uses whichever account the local CLI is currently logged in
-as; it does not log in, switch accounts, start model turns, or write
-the Zeron cache. A tooltip line identifies the source
-(`Источник: кэш Zeron` vs `Источник: Codex CLI (прямое чтение, текущий
-локальный вход)`); probe failures show a localized note such as
-"Codex CLI не отвечает". `ISKRA_CODEX_PROBE` overrides the probed
-executable for tests.
-
-Unknown windows show `--` (never `0%`); stale readings keep the last
-value with a `~` prefix; a window waiting for its next reset shows no
-inferred zero. Hovering a row gives a localized tooltip:
-`Израсходовано <provider>` + per-window remaining %, reset time, source
-fetch time, and a short problem note (e.g. "Нужен вход в Codex/Devin в
-Zeron", "Данные устарели").
-
-**Scope note — plugin vs companion.** The per-provider usage visibility
-choices (`usage_codex`, `usage_devin`, `usage_opencode`,
-`usage_claude_code` — auto/show/hide) and the language setting
-(`auto`/`en`/`ru`/`zh-Hans`) live in the Zeron plugin's own Settings and
-drive only the plugin's Iskra page inside Zeron. The standalone
-companion's HUD still shows the two providers above, in Russian — the
-plugin's settings and locales are not ported to the desktop app.
-
-## Assets
-
-The current artwork set is `assets/v6` (profile `iskra-v6`): 38
-animations × 8 frames, 256×256 source PNGs drawn into a 160×160 logical
-surface, bilinear-scaled textures, per-animation `contact` pixels used
-for edge snapping, and a transparent inset so the character can sit on
-the usable screen edge. The README GIF in `docs/media/` is built from
-exactly these frames by `scripts/build-readme-gif.py` — no fabricated
-screenshots. A V2-family manifest must contain all 38 animation keys —
-four placements (`standing_`, `floor_`, `wall_left_`, `wall_right_`)
-plus `dragged` and `floor_recline` — or the whole set is rejected and
-the previous valid set stays active.
-
-This public source snapshot includes only the current V6 runtime frames
-and original Raspberry Flame badge. Old artwork, source-generation sheets,
-moodboard references and local development history are excluded. The
-loader still supports older manifest formats when explicitly supplied.
-An explicit `--assets PATH` overrides automatic asset selection.
-
-Until a valid manifest exists, the pet shows an honest "artwork pending"
-badge. The manifest is hot-reloaded every ~2s.
-
-## Layout
-
-- `src/zeron.rs` — read-only MCP transport (`whoami`, `list_chats` only)
-- `src/model.rs` — status aggregation + semantic status kind
-- `src/behavior.rs` — placement/reaction controller (click, drag, snap)
-- `src/hyprland.rs` — monitor/fullscreen IPC
-- `src/motion.rs` — deterministic motion/clamping (auto-roaming removed)
-- `src/assets.rs` — manifest + frame validation, hot-reload
-- `src/usage.rs` — normalized usage cache reader (background thread)
-- `src/desktop.rs` — layer-shell surface, gestures, popover, badge
-- `src/launcher.rs` — detached `--launch` entry point for the plugin
-- `src/bin/prepare_assets.rs` — deterministic asset preparation
-
-## Tests
-
-```sh
-cargo test --offline
-cargo clippy --offline --all-targets -- -D warnings
-cargo fmt --check
-python3 scripts/tests/test_packaging.py
-lua5.4 plugin/iskra/tests/model_test.lua
-```
-
-Transport and compositor behavior is fixture-tested; GTK surface
-behavior requires a separate live smoke test. Local diagnostics and
-private test captures are not distributed.
-
-## Installing the plugin
-
-Use Zeron Settings → Plugins → Install and open the
-[latest release](https://github.com/Energy-Quant/Iskra/releases/latest),
-or install its signed `iskra-0.1.0.zeron-plugin` file. Review the signer
-and requested permissions in Zeron. A release becomes installable only
-after its signed plugin asset is attached; unsigned CI artifacts are
-not an end-user installation channel.
-
-The plugin works by itself. It does not install a desktop companion or
-an operating-system tray entry. Its optional desktop buttons control
-`zeron-pet` only when that companion is separately installed and the
-person grants the `commands` permission.
-
-For developers building from source, run `python3 scripts/build-plugin.py`
-and follow `docs/PUBLISHING.md`. Only the person signs/exports and grants
-consent in Zeron; scripts do not replace that review.
-
-## Installing the companion
-
-Download `iskra-desktop-0.1.0-linux-x86_64.tar.gz` and `SHA256SUMS` from
-the same GitHub release. Verify its checksum, extract it and run
-`./install.sh` inside `iskra-desktop-0.1.0/`. This installs the versioned
-package under `~/.local/lib/iskra-desktop/` and the stable executable
-`~/.local/bin/zeron-pet`. It does not start anything or add autostart.
-
-Launch the installed executable. Avoid old development `run.sh` scripts
-and `target/release` paths: those can still contain older artwork. Updates
-use a new release package and the same transactional installer.
-
-An optional ashell bridge is provided as the separate release asset
-`zeron-pet-bar-linux-x86_64`. It controls the installed executable, never
-a source checkout. See [ASHELL.md](docs/ASHELL.md). This integration is
-optional and independent of installing the Zeron plugin.
-
-## Licensing
-
-- **Code and developer documentation** — MIT, copyright (c) 2026 Quant.
-  Full text: [`LICENSE`](LICENSE). `Cargo.toml` declares `license =
-  "MIT"` for the companion crate.
-- **Original Iskra artwork** — CC BY 4.0, copyright (c) 2026 Quant, to
-  the extent the owner holds applicable rights. Full text:
-  [`LICENSE-ARTWORK`](LICENSE-ARTWORK); covered assets, attribution and
-  open provenance caveats: [`ARTWORK.md`](ARTWORK.md).
-- **Third-party marks** — excluded from both grants. The Arch Linux
-  mark appearing in the artwork carries a separate notice and an open
-  policy review: [`TRADEMARKS.md`](TRADEMARKS.md).
-- **Vendored Zeron SDK** — `plugin/iskra/zeron.luau` is MIT,
-  copyright (c) 2026 Wing; see `plugin/iskra/THIRD_PARTY_NOTICES.md`.
-- **Rust dependency notices** — the vendored license-text snapshot for
-  the Linux dependency closure is documented in
-  `third_party/RUST_LICENSES.md`.
-- Runtime system libraries (GTK4, gtk4-layer-shell, etc.) stay under
-  their own licenses and are not bundled.
-
-Publication scope and provenance notes are recorded in
-`docs/LICENSE_AUDIT.md`; release steps are in `docs/PUBLISHING.md`.
-
-## Privacy
-
-- The plugin runs in Zeron's sandbox with the permissions the user
-  grants and nothing more. It does not read credentials, session logs
-  or the usage cache file, makes no network calls of its own, and
-  declares no `native`/`mcp` program.
-- The companion reads Zeron's local state read-only (`zeron mcp`
-  `whoami`/`list_chats`, the normalized usage cache), plus the bounded
-  read-only Codex probe described above. Iskra has no telemetry and
-  uploads nothing of its own; Zeron and the provider tools keep their
-  normal network and sync behavior.
+[![Star History](https://api.star-history.com/svg?repos=Energy-Quant/Iskra&type=Date)](https://star-history.com/#Energy-Quant/Iskra&Date)

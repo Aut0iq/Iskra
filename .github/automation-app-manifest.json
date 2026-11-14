@@ -1,0 +1,12 @@
+{
+  "name": "Iskra Release Automation",
+  "url": "https://github.com/Energy-Quant/Iskra",
+  "public": false,
+  "default_permissions": {
+    "contents": "write",
+    "pull_requests": "write",
+    "actions": "write",
+    "metadata": "read"
+  },
+  "default_events": []
+}
