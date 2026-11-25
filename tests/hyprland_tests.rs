@@ -195,6 +195,21 @@ fn monitor_apply_unplug_fallback() {
 }
 
 #[test]
+fn monitor_apply_keeps_connected_fallback_until_pin_returns() {
+    let mut m = parse_monitors(&monitors_json()).unwrap();
+    // eDP-1 is focused, but the pet already fell back to HDMI-A-1.
+    let pin = Some("DP-9");
+    let fallback = Some("HDMI-A-1");
+    assert_eq!(monitor_to_apply(&m, pin, fallback), None);
+
+    let mut restored = m[0].clone();
+    restored.name = "DP-9".into();
+    restored.focused = false;
+    m.push(restored);
+    assert_eq!(monitor_to_apply(&m, pin, fallback).as_deref(), pin);
+}
+
+#[test]
 fn malformed_json_is_an_error() {
     assert!(parse_monitors("not json").is_err());
     assert!(parse_monitors("{}").is_err());

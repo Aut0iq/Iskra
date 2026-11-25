@@ -203,13 +203,17 @@ pub fn choose_monitor(monitors: &[MonitorInfo], preferred: Option<&str>) -> Opti
 /// connector last pushed to gtk_layer_set_monitor.
 /// - explicit valid preferred produces an initial apply;
 /// - repeated identical state produces no redundant switch;
-/// - when the requested connector is gone (unplug) the fallback applies.
+/// - while the requested connector is gone, keep a connected fallback
+///   rather than moving the pet with keyboard focus.
 pub fn monitor_to_apply(
     monitors: &[MonitorInfo],
     requested: Option<&str>,
     applied: Option<&str>,
 ) -> Option<String> {
-    let chosen = choose_monitor(monitors, requested)?;
+    let preferred = requested
+        .filter(|name| monitors.iter().any(|m| m.name == *name))
+        .or(applied);
+    let chosen = choose_monitor(monitors, preferred)?;
     if applied == Some(chosen.name.as_str()) {
         None
     } else {
