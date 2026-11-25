@@ -6,7 +6,11 @@ use zeron_pet::{cli, desktop, launcher, layer_shell};
 
 fn main() {
     env_logger::init();
-    let args: Vec<String> = std::env::args().skip(1).collect();
+    // args_os + lossy: env::args() panics on non-UTF8 argv.
+    let args: Vec<String> = std::env::args_os()
+        .skip(1)
+        .map(|a| a.to_string_lossy().into_owned())
+        .collect();
     let cli = match cli::parse(&args) {
         Ok(c) => c,
         Err(e) => {

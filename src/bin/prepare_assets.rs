@@ -15,21 +15,43 @@ fn main() {
     let mut raw = PathBuf::from("assets/raw");
     let mut out = PathBuf::from("assets");
     let mut report_path = PathBuf::from("artifacts/prepare-report.json");
-    let args: Vec<String> = std::env::args().skip(1).collect();
+    // The JSON report requires UTF-8 paths. Validate before writing assets
+    // rather than silently substituting a different filesystem path.
+    let args: Vec<String> = match std::env::args_os()
+        .skip(1)
+        .map(|a| a.into_string())
+        .collect()
+    {
+        Ok(args) => args,
+        Err(_) => {
+            eprintln!("arguments must be valid UTF-8");
+            std::process::exit(2);
+        }
+    };
     let mut i = 0;
     while i < args.len() {
-        match args[i].as_str() {
+        let flag = args[i].as_str();
+        let value = |i: usize| -> String {
+            match args.get(i) {
+                Some(v) => v.clone(),
+                None => {
+                    eprintln!("{flag} requires a value");
+                    std::process::exit(2);
+                }
+            }
+        };
+        match flag {
             "--raw" => {
                 i += 1;
-                raw = PathBuf::from(args.get(i).expect("--raw DIR"));
+                raw = PathBuf::from(value(i));
             }
             "--out" => {
                 i += 1;
-                out = PathBuf::from(args.get(i).expect("--out DIR"));
+                out = PathBuf::from(value(i));
             }
             "--report" => {
                 i += 1;
-                report_path = PathBuf::from(args.get(i).expect("--report PATH"));
+                report_path = PathBuf::from(value(i));
             }
             other => {
                 eprintln!("usage: zeron-pet-prepare-assets [--raw DIR] [--out DIR] [--report PATH] (got '{other}')");
@@ -69,8 +91,10 @@ fn main() {
     if let Some(parent) = report_path.parent() {
         std::fs::create_dir_all(parent).ok();
     }
-    std::fs::write(&report_path, serde_json::to_string_pretty(&report).unwrap())
-        .expect("write report");
+    if let Err(e) = std::fs::write(&report_path, serde_json::to_string_pretty(&report).unwrap()) {
+        eprintln!("report write failed: {e}");
+        std::process::exit(1);
+    }
 
     for r in &reports {
         println!("{:<14} {}", r.name, r.status);

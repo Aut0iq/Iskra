@@ -26,6 +26,29 @@ fn tmpdir(tag: &str) -> PathBuf {
     panic!("no unique temp dir");
 }
 
+#[cfg(unix)]
+#[test]
+fn non_utf8_report_path_is_rejected_without_overwriting_a_different_file() {
+    use std::ffi::OsStr;
+    use std::os::unix::ffi::OsStrExt;
+    use std::process::Command;
+
+    let dir = tmpdir("non-utf8-report");
+    let other = dir.join("report-�.json");
+    std::fs::write(&other, "keep me").unwrap();
+    let result = Command::new(env!("CARGO_BIN_EXE_zeron-pet-prepare-assets"))
+        .current_dir(&dir)
+        .arg("--report")
+        .arg(OsStr::from_bytes(b"report-\xff.json"))
+        .output()
+        .unwrap();
+    let content = std::fs::read_to_string(other).unwrap();
+    std::fs::remove_dir_all(&dir).unwrap();
+    assert_eq!(result.status.code(), Some(2));
+    assert!(String::from_utf8_lossy(&result.stderr).contains("UTF-8"));
+    assert_eq!(content, "keep me");
+}
+
 /// A 4-cell strip: each cell has a figure (color block) at a per-cell
 /// offset, everything else transparent.
 fn strip(cw: u32, ch: u32, figs: &[(u32, u32, u32, u32)]) -> RgbaImage {

@@ -1,7 +1,7 @@
 {
   "id": "iskra",
   "name": "Iskra",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Iskra in Zeron: an animated companion mirroring chat status, agent usage as Zeron last read it, and opt-in controls for the separate zeron-pet desktop helper.",
   "icon": "icon.svg",
   "entry": "init.luau",

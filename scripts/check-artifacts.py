@@ -20,8 +20,8 @@ expected = {p.relative_to(stage).as_posix(): p.read_bytes() for p in stage.rglob
 if 'signature' in json.loads(expected['zeron-plugin.json']):
     raise ValueError('CI staging must remain unsigned')
 archives = list(artifacts.rglob('iskra-plugin-UNSIGNED-*.zip'))
-if {p.name for p in archives} != {f'iskra-plugin-UNSIGNED-{p}.zip' for p in ('linux', 'windows', 'macos')}:
-    raise ValueError('missing portable platform package')
+if len(archives) != 3 or {p.name for p in archives} != {f'iskra-plugin-UNSIGNED-{p}.zip' for p in ('linux', 'windows', 'macos')}:
+    raise ValueError('missing or duplicated portable platform package')
 with tempfile.TemporaryDirectory(prefix='iskra-contract-') as temp:
     for i, archive in enumerate(archives):
         dest = Path(temp) / str(i); delivery.unzip(archive, dest)
@@ -29,7 +29,11 @@ with tempfile.TemporaryDirectory(prefix='iskra-contract-') as temp:
         if actual != expected:
             raise ValueError('cross-platform payload mismatch: ' + archive.name)
 manifest = json.loads((ROOT / 'assets/v6/manifest.json').read_bytes())
-for archive in artifacts.rglob('iskra-desktop-*.tar.gz'):
+# Zero matches here must never read as "all checks passed".
+desktops = list(artifacts.rglob('iskra-desktop-*.tar.gz'))
+if len(desktops) != 1:
+    raise ValueError('exactly one native desktop tarball is required')
+for archive in desktops:
     with tarfile.open(archive) as tar:
         members = tar.getmembers()
         if len(members) != len({m.name for m in members}):
@@ -62,7 +66,10 @@ for archive in artifacts.rglob('iskra-desktop-*.tar.gz'):
         for path in (ROOT / 'third_party/rust-licenses').rglob('*'):
             if path.is_file() and tar.extractfile(prefix + 'licenses/' + path.relative_to(ROOT / 'third_party/rust-licenses').as_posix()).read() != path.read_bytes():
                 raise ValueError('native dependency license mismatch')
-for manifest_path in artifacts.rglob('SHA256SUMS'):
+checksums = list(artifacts.rglob('SHA256SUMS'))
+if len(checksums) != 1:
+    raise ValueError('exactly one SHA256SUMS is required')
+for manifest_path in checksums:
     for line in manifest_path.read_text(encoding='utf-8').splitlines():
         expected_hash, name = line.split(maxsplit=1); name = name.strip()
         if '/' in name or '\\' in name or name in ('.', '..'):

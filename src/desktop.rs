@@ -1353,6 +1353,13 @@ fn build_ui(
                 let mut s = sh.borrow_mut();
                 s.behavior.cancel(); // popover cancels any captured press
                 refresh_chat_list(&ui, &s);
+                // Middle-click/--pause/--resume all toggle motion without
+                // touching this label; sync it as the popover opens.
+                ui.pause_btn.set_label(if s.motion.enabled {
+                    "Pause anim"
+                } else {
+                    "Resume anim"
+                });
             }
             ui.popover
                 .set_pointing_to(Some(&gdk::Rectangle::new(x as i32, y as i32, 1, 1)));
@@ -1542,7 +1549,7 @@ pub fn run(cli: Cli) -> i32 {
                     cmd.print_literal(&format!("{}\n", sh.borrow().status_line(&d)));
                 }
                 apply_control(sh, ui_slot.borrow().as_ref(), &parsed, app);
-                if parsed.assets.is_some() || parsed.monitor.is_some() {
+                if parsed.has_startup_options() {
                     cmd.printerr_literal(
                         "already running: --assets/--monitor/--scale apply at launch only\n",
                     );
@@ -1738,24 +1745,32 @@ fn tick(
             match ev {
                 hyprland::HyprEvent::State { monitors, clients } => {
                     s.hypr_ok = true;
-                    let prev_applied = s.applied_monitor.clone();
-                    // Apply the connector whenever the applied monitor does
-                    // not match the stable choice (first apply, --monitor,
-                    // or unplug fallback).
+                    if s.applied_monitor
+                        .as_ref()
+                        .is_some_and(|name| !monitors.iter().any(|m| &m.name == name))
+                    {
+                        s.applied_monitor = None;
+                    }
+                    let mut connector_changed = false;
+                    // Keep the CLI pin across hotplug. Use the last
+                    // successful output for geometry until GDK moves us.
                     if let Some(name) = hyprland::monitor_to_apply(
                         &monitors,
-                        s.monitor_name.as_deref(),
+                        s.cli.monitor.as_deref().or(s.monitor_name.as_deref()),
                         s.applied_monitor.as_deref(),
                     ) {
-                        s.monitor_name = Some(name.clone());
-                        set_layer_monitor(ui, &name);
-                        s.applied_monitor = Some(name);
+                        // No matching GDK monitor yet: retry next poll —
+                        // do not record an apply that never happened.
+                        if set_layer_monitor(ui, &name) {
+                            s.monitor_name = Some(name.clone());
+                            s.applied_monitor = Some(name);
+                            connector_changed = true;
+                        }
                     }
                     // Install the fresh lists BEFORE geometry reads them;
                     // reanchor must use the new monitor's real rectangle.
                     s.monitors = monitors;
                     s.clients = clients;
-                    let connector_changed = s.applied_monitor != prev_applied;
                     if let Some(name) = &s.monitor_name {
                         if let Some(mon) = s.monitors.iter().find(|m| &m.name == name) {
                             let nb = hyprland::usable_bounds(mon, s.win_w, s.win_h);
@@ -2051,9 +2066,11 @@ fn tick(
     apply_input_region(ui, &sh.borrow());
 }
 
-fn set_layer_monitor(ui: &Ui, connector: &str) {
+/// Push the pet surfaces to `connector`. False when no GDK monitor
+/// matches it yet (hotplug races: hyprctl lists the output before GDK).
+fn set_layer_monitor(ui: &Ui, connector: &str) -> bool {
     let Some(display) = gdk::Display::default() else {
-        return;
+        return false;
     };
     let monitors = display.monitors();
     for i in 0..monitors.n_items() {
@@ -2068,9 +2085,10 @@ fn set_layer_monitor(ui: &Ui, connector: &str) {
                 layer_shell::set_monitor(ui.raw_window, m.as_ptr() as *mut c_void);
                 layer_shell::set_monitor(ui.raw_hud, m.as_ptr() as *mut c_void);
             }
-            return;
+            return true;
         }
     }
+    false
 }
 
 #[cfg(test)]

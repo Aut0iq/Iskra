@@ -228,7 +228,20 @@ function M.usage_refresher(read, apply)
 	local coord = M.usage_coordinator()
 	local dispatch
 	dispatch = function(gen)
-		read():after(function(records)
+		-- A synchronous read() throw must still settle the generation —
+		-- otherwise in_flight stays true and refreshes stall forever.
+		local ok, promise = pcall(read)
+		if not ok then
+			local applied, again = coord.settled(gen)
+			if applied then
+				apply(false, tostring(promise))
+				if again then
+					dispatch(again)
+				end
+			end
+			return
+		end
+		promise:after(function(records)
 			local applied, again = coord.settled(gen)
 			if not applied then
 				return

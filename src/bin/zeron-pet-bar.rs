@@ -94,7 +94,11 @@ fn run_cmd(
                 }
                 std::thread::sleep(Duration::from_millis(10));
             }
-            Err(_) => return (false, String::new()),
+            Err(_) => {
+                let _ = child.kill();
+                let _ = child.wait();
+                return (false, String::new());
+            }
         }
     }
 }
@@ -102,7 +106,9 @@ fn run_cmd(
 /// Some(line) = pet responded (parse for connected); None = not running.
 fn status_line() -> Option<String> {
     let (ok, out) = run_cmd(pet_binary(), &["--status"], CMD_TIMEOUT);
-    if !ok || out.trim().is_empty() || out.contains("not running") {
+    // The real "not running" case exits 1 — an upstream error string in
+    // last_error may contain those words on a healthy status line.
+    if !ok || out.trim().is_empty() {
         return None;
     }
     Some(out)
@@ -195,7 +201,11 @@ fn do_action(action: &str) -> bool {
 }
 
 fn main() {
-    let args: Vec<String> = std::env::args().skip(1).collect();
+    // args_os + lossy: env::args() panics on non-UTF8 argv.
+    let args: Vec<String> = std::env::args_os()
+        .skip(1)
+        .map(|a| a.to_string_lossy().into_owned())
+        .collect();
     let code = match args.first().map(String::as_str) {
         Some("listen") => {
             let stdout = std::io::stdout();

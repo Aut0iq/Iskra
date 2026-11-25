@@ -216,6 +216,9 @@ struct Press {
     start_x: i32,
     start_y: i32,
     dragging: bool,
+    /// This press interrupted an active drag settle: the Dragged pose it
+    /// inherited is stale unless the press itself becomes a new drag.
+    interrupted_settle: bool,
 }
 
 /// Behavior controller: placement, reactions, timer budgets.
@@ -266,6 +269,8 @@ impl Behavior {
             start_x: pos.0,
             start_y: pos.1,
             dragging: false,
+            interrupted_settle: !self.settle_left.is_zero()
+                && self.reaction == Some(Reaction::Dragged),
         });
         self.settle_left = Duration::ZERO;
     }
@@ -298,6 +303,11 @@ impl Behavior {
             self.settle_left = SETTLE;
             return self.snap_at(pos, geometry);
         }
+        // Click below threshold after an interrupted settle: the inherited
+        // Dragged pose has no timer left — drop it or it lingers forever.
+        if press.interrupted_settle && self.reaction == Some(Reaction::Dragged) {
+            self.reaction = None;
+        }
         // Click below threshold: streak counts consecutive clicks chained
         // by TRIPLE_CLICK; the third promotes to a chat-open request.
         self.click_streak = if self.click_chain_left.is_zero() {
@@ -328,9 +338,13 @@ impl Behavior {
     /// phantom click, visual reactions keep their own clocks. A captured
     /// drag never got a settle timer, so its Dragged reaction is dropped
     /// here instead of lingering forever; settled/other reactions stay.
+    /// The same holds for a press that interrupted a settle mid-flight.
     pub fn cancel_capture(&mut self) {
-        let was_dragging = self.press.take().is_some_and(|p| p.dragging);
-        if was_dragging && self.reaction == Some(Reaction::Dragged) {
+        let owned_drag = self
+            .press
+            .take()
+            .is_some_and(|p| p.dragging || p.interrupted_settle);
+        if owned_drag && self.reaction == Some(Reaction::Dragged) {
             self.reaction = None;
             self.settle_left = Duration::ZERO;
         }
@@ -1021,6 +1035,29 @@ mod tests {
         b.tick(Duration::from_secs(60));
         assert!(b.release((600, 300), g).is_none());
         assert_eq!(b.reaction, None);
+    }
+
+    #[test]
+    fn click_during_settle_drops_inherited_dragged() {
+        // A press mid-settle zeroes the settle timer; if it stays a
+        // click, the inherited Dragged pose must not freeze forever.
+        let mut b = Behavior::new(Placement::Standing);
+        b.press((400, 300));
+        b.update((600, 300));
+        b.release((600, 300), g2());
+        assert_eq!(b.reaction, Some(Reaction::Dragged));
+        assert!(!b.settle_left.is_zero(), "drag is settling");
+        b.press((600, 300));
+        b.release((601, 300), g2());
+        assert_ne!(b.reaction, Some(Reaction::Dragged));
+        // Same interruption ended by a capture cancel.
+        let mut c = Behavior::new(Placement::Standing);
+        c.press((400, 300));
+        c.update((600, 300));
+        c.release((600, 300), g2());
+        c.press((600, 300));
+        c.cancel_capture();
+        assert_eq!(c.reaction, None);
     }
 
     #[test]
