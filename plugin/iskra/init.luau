@@ -310,7 +310,9 @@ local function each_or(list: () -> { any }, row: (any) -> Node, fallback: () -> 
 	if ok then
 		return node
 	end
-	ok, node = pcall(ui.each, ui.computed(list), row)
+	ok, node = pcall(function()
+		return ui.each(ui.computed(list), row)
+	end)
 	if ok then
 		return node
 	end
@@ -332,7 +334,8 @@ local function usage_section(): Node
 		},
 		ui.show(function(): boolean
 			local box = usage_box:get() or {}
-			return #model.visible_usage_rows(box.rows or {}, usage_preferences()) == 0
+			-- A failed read shows the error line, not "no providers".
+			return box.err == nil and #model.visible_usage_rows(box.rows or {}, usage_preferences()) == 0
 		end, ui.text { i18n.t("usage.empty"), text_size = "$font.size.xs", color = "$text.tertiary" }),
 		each_or(function(): { any }
 			local box = usage_box:get() or {}
@@ -396,7 +399,7 @@ local desktop_run = model.command_runner(function(action: string): any
 end, function(state: any)
 	desktop_pending_box:set(state.kind == "running")
 	if state.kind == "done" then
-		local r = state.result
+		local r = if type(state.result) == "table" then state.result else nil
 		desktop_result_box:set({
 			kind = "done",
 			action = state.action,

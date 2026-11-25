@@ -2,7 +2,7 @@
   "schema": 1,
   "target": "x86_64-unknown-linux-gnu",
   "scope": "Linux normal/build registry dependency closure; not a list of all files linked into the executable",
-  "cargo_lock_sha256": "6a138867332ed78c87a9f304af45f560bd462afe58cd4b8e08da3899d21adf50",
+  "cargo_lock_sha256": "697c2436ce0b9fc87567bfaf8796d1f44a41a69f018c9129d8630bf922fa4edf",
   "packages": [
     {
       "name": "adler2",

@@ -24,6 +24,13 @@ def api(path):
     return json.loads(gh('api', path))
 
 
+def api_all(path, key=None):
+    """Every page of a list endpoint. `key` unwraps envelope pages like
+    {'workflow_runs': [...]}; bare pages are already item lists."""
+    pages = json.loads(gh('api', '--paginate', '--slurp', path))
+    return [item for page in pages for item in (page[key] if key else page)]
+
+
 def source_run(run, channel):
     expected = 'dev' if channel == 'nightly' else 'main'
     if (run.get('conclusion') != 'success' or run.get('head_branch') != expected
@@ -59,12 +66,12 @@ def main():
         sha = api(f'repos/{REPO}/git/ref/heads/main')['object']['sha']
         blob = api(f'repos/{REPO}/contents/plugin/iskra/zeron-plugin.json?ref={sha}')
         version = json.loads(base64.b64decode(blob['content']))['version']
-        candidate = next((r for r in api(f'repos/{REPO}/releases?per_page=100')
+        candidate = next((r for r in api_all(f'repos/{REPO}/releases?per_page=100')
                           if r['tag_name'] == 'v' + version and r['draft']), None)
         if not candidate or len([a for a in candidate['assets'] if a['name'].endswith('.zeron-plugin')]) != 1:
             print('No draft with an author export is ready; nothing is published.')
             return
-        runs = api(f'repos/{REPO}/actions/workflows/ci.yml/runs?branch=main&per_page=50')['workflow_runs']
+        runs = api_all(f'repos/{REPO}/actions/workflows/ci.yml/runs?branch=main&per_page=50', 'workflow_runs')
         ready = next((r for r in runs if r['head_sha'] == sha and r['event'] in ('push', 'workflow_dispatch')), None)
         if ready is None or ready['conclusion'] != 'success':
             print('Current main has no latest successful CI; publishing remains closed.')
@@ -77,12 +84,12 @@ def main():
     current = api(f'repos/{REPO}/git/ref/heads/{branch}')['object']['sha']
     if current != run['head_sha']:
         raise ValueError('branch advanced; run CI again on the current commit')
-    recent = api(f'repos/{REPO}/actions/workflows/ci.yml/runs?branch={branch}&per_page=100')['workflow_runs']
+    recent = api_all(f'repos/{REPO}/actions/workflows/ci.yml/runs?branch={branch}&per_page=100', 'workflow_runs')
     latest = next((r for r in recent if r['head_sha'] == current and r['event'] in ('push', 'workflow_dispatch')), None)
     if latest is None or latest['id'] != args.run or latest['conclusion'] != 'success':
         raise ValueError('only the latest exact-SHA source CI is eligible; an older green run is insufficient')
 
-    jobs = api(f'repos/{REPO}/actions/runs/{args.run}/jobs?per_page=100')['jobs']
+    jobs = api_all(f'repos/{REPO}/actions/runs/{args.run}/jobs?per_page=100', 'jobs')
     if not any(j['name'] == 'CI Gate' and j['conclusion'] == 'success' for j in jobs):
         raise ValueError('the required aggregate CI Gate did not succeed')
     with tempfile.TemporaryDirectory(prefix='iskra-delivery-') as temp:
@@ -104,7 +111,7 @@ def main():
         if not re.fullmatch(r'\d+\.\d+\.\d+', version):
             raise ValueError('stable version must be X.Y.Z')
         tag = f'nightly-{run["head_sha"][:12]}-{args.run}' if args.operation == 'nightly' else 'v' + version
-        releases = api(f'repos/{REPO}/releases?per_page=100')
+        releases = api_all(f'repos/{REPO}/releases?per_page=100')
         release = next((r for r in releases if r['tag_name'] == tag), None)
         if release and not release['draft']:
             if args.operation == 'publish':

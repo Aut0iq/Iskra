@@ -74,6 +74,12 @@ impl ChatMeta {
         }
     }
 
+    /// CamelCase first, snake_case fallback — the same dual-key
+    /// acceptance `parse_whoami` uses; the protocol has emitted both.
+    fn field<'a>(v: &'a Value, camel: &str, snake: &str) -> Option<&'a Value> {
+        v.get(camel).or_else(|| v.get(snake))
+    }
+
     pub fn from_json(v: &Value) -> Option<Self> {
         let id = v.get("id").and_then(Value::as_str)?.to_string();
         Some(ChatMeta {
@@ -84,24 +90,19 @@ impl ChatMeta {
                 .unwrap_or("")
                 .to_string(),
             status: NativeStatus::parse(v.get("status").and_then(Value::as_str)),
-            stale: v
-                .get("statusStale")
+            stale: Self::field(v, "statusStale", "status_stale")
                 .and_then(Value::as_bool)
                 .unwrap_or(false),
-            last_message_at: v
-                .get("lastMessageAt")
+            last_message_at: Self::field(v, "lastMessageAt", "last_message_at")
                 .and_then(Value::as_str)
                 .map(str::to_string),
-            parent_chat_id: v
-                .get("parentChatId")
+            parent_chat_id: Self::field(v, "parentChatId", "parent_chat_id")
                 .and_then(Value::as_str)
                 .map(str::to_string),
-            device_id: v
-                .get("deviceId")
+            device_id: Self::field(v, "deviceId", "device_id")
                 .and_then(Value::as_str)
                 .map(str::to_string),
-            last_turn_outcome: v
-                .get("lastTurnOutcome")
+            last_turn_outcome: Self::field(v, "lastTurnOutcome", "last_turn_outcome")
                 .and_then(Value::as_str)
                 .map(str::to_string),
         })

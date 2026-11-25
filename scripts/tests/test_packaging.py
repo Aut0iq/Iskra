@@ -1378,14 +1378,13 @@ class StagePluginTests(unittest.TestCase):
         live = self.plugins / "iskra"
         live.mkdir()
         (live / "old.txt").write_text("old")
-        # Make the plugins root read-only: mv of the live dir must fail.
-        os.chmod(self.plugins, 0o500)
-        try:
-            r = self._stage()
-        finally:
-            os.chmod(self.plugins, 0o700)
+        # Fail on the backup path after staging, even when run as root.
+        (self.tmp / "plugin-backups").write_text("blocks mkdir")
+        r = self._stage()
         self.assertNotEqual(r.returncode, 0)
+        self.assertIn("plugin-backups", r.stderr)
         self.assertEqual((live / "old.txt").read_text(), "old")
+        self.assertEqual(list(self.plugins.iterdir()), [live])
 
 
 if __name__ == "__main__":

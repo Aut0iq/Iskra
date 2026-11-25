@@ -87,7 +87,7 @@ fi
 
 if ! mv "$NEW" "$LIVE"; then
     [ -n "${BAK:-}" ] && mv "$BAK" "$LIVE"
-    trap - EXIT INT TERM
+    rm -rf "$NEW"; trap - EXIT INT TERM
     die "staging failed — previous plugin restored"
 fi
 trap - EXIT INT TERM
