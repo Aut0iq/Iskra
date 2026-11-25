@@ -1038,6 +1038,29 @@ mod tests {
     }
 
     #[test]
+    fn click_during_settle_drops_inherited_dragged() {
+        // A press mid-settle zeroes the settle timer; if it stays a
+        // click, the inherited Dragged pose must not freeze forever.
+        let mut b = Behavior::new(Placement::Standing);
+        b.press((400, 300));
+        b.update((600, 300));
+        b.release((600, 300), g2());
+        assert_eq!(b.reaction, Some(Reaction::Dragged));
+        assert!(!b.settle_left.is_zero(), "drag is settling");
+        b.press((600, 300));
+        b.release((601, 300), g2());
+        assert_ne!(b.reaction, Some(Reaction::Dragged));
+        // Same interruption ended by a capture cancel.
+        let mut c = Behavior::new(Placement::Standing);
+        c.press((400, 300));
+        c.update((600, 300));
+        c.release((600, 300), g2());
+        c.press((600, 300));
+        c.cancel_capture();
+        assert_eq!(c.reaction, None);
+    }
+
+    #[test]
     fn cancel_capture_retains_blush_and_forced_demo() {
         // Blush survives a capture cancel and expires on its own clock.
         let mut b = Behavior::new(Placement::Standing);

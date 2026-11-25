@@ -1378,16 +1378,13 @@ class StagePluginTests(unittest.TestCase):
         live = self.plugins / "iskra"
         live.mkdir()
         (live / "old.txt").write_text("old")
-        # Plugins root stays writable (staging must succeed); the backup
-        # PARENT can't be created — the failure hits the backup path
-        # itself, not the earlier staging mktemp.
-        os.chmod(self.tmp, 0o500)
-        try:
-            r = self._stage()
-        finally:
-            os.chmod(self.tmp, 0o700)
+        # Fail on the backup path after staging, even when run as root.
+        (self.tmp / "plugin-backups").write_text("blocks mkdir")
+        r = self._stage()
         self.assertNotEqual(r.returncode, 0)
+        self.assertIn("plugin-backups", r.stderr)
         self.assertEqual((live / "old.txt").read_text(), "old")
+        self.assertEqual(list(self.plugins.iterdir()), [live])
 
 
 if __name__ == "__main__":

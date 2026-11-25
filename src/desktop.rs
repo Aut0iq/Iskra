@@ -1549,7 +1549,7 @@ pub fn run(cli: Cli) -> i32 {
                     cmd.print_literal(&format!("{}\n", sh.borrow().status_line(&d)));
                 }
                 apply_control(sh, ui_slot.borrow().as_ref(), &parsed, app);
-                if parsed.assets.is_some() || parsed.monitor.is_some() || parsed.scale != 2 {
+                if parsed.has_startup_options() {
                     cmd.printerr_literal(
                         "already running: --assets/--monitor/--scale apply at launch only\n",
                     );
@@ -1745,30 +1745,32 @@ fn tick(
             match ev {
                 hyprland::HyprEvent::State { monitors, clients } => {
                     s.hypr_ok = true;
-                    let prev_applied = s.applied_monitor.clone();
-                    // Apply the connector whenever the applied monitor does
-                    // not match the stable choice (first apply, --monitor,
-                    // or unplug fallback).
-                    // The --monitor pin always wins as `requested`;
-                    // monitor_name tracks the applied connector so the
-                    // pin survives an unplug/replug fallback cycle.
+                    if s.applied_monitor
+                        .as_ref()
+                        .is_some_and(|name| !monitors.iter().any(|m| &m.name == name))
+                    {
+                        s.applied_monitor = None;
+                    }
+                    let mut connector_changed = false;
+                    // Keep the CLI pin across hotplug. Use the last
+                    // successful output for geometry until GDK moves us.
                     if let Some(name) = hyprland::monitor_to_apply(
                         &monitors,
                         s.cli.monitor.as_deref().or(s.monitor_name.as_deref()),
                         s.applied_monitor.as_deref(),
                     ) {
-                        s.monitor_name = Some(name.clone());
                         // No matching GDK monitor yet: retry next poll —
                         // do not record an apply that never happened.
                         if set_layer_monitor(ui, &name) {
+                            s.monitor_name = Some(name.clone());
                             s.applied_monitor = Some(name);
+                            connector_changed = true;
                         }
                     }
                     // Install the fresh lists BEFORE geometry reads them;
                     // reanchor must use the new monitor's real rectangle.
                     s.monitors = monitors;
                     s.clients = clients;
-                    let connector_changed = s.applied_monitor != prev_applied;
                     if let Some(name) = &s.monitor_name {
                         if let Some(mon) = s.monitors.iter().find(|m| &m.name == name) {
                             let nb = hyprland::usable_bounds(mon, s.win_w, s.win_h);

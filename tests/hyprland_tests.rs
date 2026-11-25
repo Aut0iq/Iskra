@@ -75,8 +75,7 @@ fn maximized_on_active_workspace_does_not_hide() {
     }
     // Legacy payload without fullscreenClient: nonzero is fullscreen.
     let c = parse_clients(&clients_json(&[
-        r#"{"mapped":true,"fullscreen":1,"workspace":{"id":3,"name":"3"},"monitor":0}"#
-            .to_string(),
+        r#"{"mapped":true,"fullscreen":1,"workspace":{"id":3,"name":"3"},"monitor":0}"#.to_string(),
     ]))
     .unwrap();
     assert!(matches!(

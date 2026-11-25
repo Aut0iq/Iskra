@@ -9,6 +9,7 @@ use std::path::PathBuf;
 pub struct Cli {
     pub assets: Option<PathBuf>,
     pub scale: u32,
+    pub(crate) scale_explicit: bool,
     pub monitor: Option<String>,
     pub demo: Option<String>,
     pub cycle_demo: bool,
@@ -100,6 +101,7 @@ pub fn parse(args: &[String]) -> Result<Cli, String> {
                 if cli.scale == 0 || cli.scale > 8 {
                     return Err("--scale must be 1..=8".to_string());
                 }
+                cli.scale_explicit = true;
             }
             "--monitor" => {
                 i += 1;
@@ -182,6 +184,10 @@ pub fn parse(args: &[String]) -> Result<Cli, String> {
 }
 
 impl Cli {
+    pub fn has_startup_options(&self) -> bool {
+        self.assets.is_some() || self.monitor.is_some() || self.scale_explicit
+    }
+
     /// Normalized startup-only argv for a `--launch` cold start. Rebuilt
     /// from parsed fields rather than copied from raw argv, so values with
     /// spaces — even a literal `--launch` used as a connector name — reach
@@ -192,7 +198,7 @@ impl Cli {
             v.push("--assets".to_string());
             v.push(a.to_string_lossy().into_owned());
         }
-        if self.scale != 2 {
+        if self.scale_explicit {
             v.push("--scale".to_string());
             v.push(self.scale.to_string());
         }
@@ -251,6 +257,14 @@ mod tests {
         assert_eq!(c.demo.as_deref(), Some("joy"));
         assert!(!c.cycle_demo);
         assert!(parse(&argv(&["--cycle-demo"])).unwrap().cycle_demo);
+    }
+
+    #[test]
+    fn explicit_default_scale_still_counts_as_a_startup_option() {
+        assert!(!parse(&argv(&["--status"])).unwrap().has_startup_options());
+        let scale = parse(&argv(&["--scale", "2"])).unwrap();
+        assert!(scale.has_startup_options());
+        assert_eq!(scale.startup_args(), ["--scale", "2"]);
     }
 
     #[test]

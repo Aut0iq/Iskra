@@ -429,6 +429,18 @@ mod tests {
     use std::os::unix::fs::symlink;
     use std::time::{SystemTime, UNIX_EPOCH};
 
+    #[test]
+    fn null_structured_content_falls_back_to_text() {
+        let result = serde_json::json!({
+            "structuredContent": null,
+            "content": [{"type": "text", "text": "{\"ok\":true}"}]
+        });
+        assert_eq!(
+            parse_tool_result(&result).unwrap(),
+            serde_json::json!({"ok": true})
+        );
+    }
+
     fn tmpdir(tag: &str) -> PathBuf {
         let d = std::env::temp_dir().join(format!(
             "iskra-zeron-resolve-{tag}-{}-{}",

@@ -302,6 +302,37 @@ usage_api2.pending():resolve({})
 eq(#applied2, 2, "refresher: recovery applies after failure")
 eq(applied2[2].ok, true, "refresher: recovered ok=true")
 
+-- synchronous throw: read() raising before returning a promise must
+-- still settle the generation, or every later refresh stalls
+local throws = true
+local reads3 = 0
+local applied3 = {}
+local pending3
+local refresh3 = model.usage_refresher(function()
+	reads3 = reads3 + 1
+	if throws then
+		error("sync boom")
+	end
+	local self = {}
+	function self:after(ok_cb)
+		pending3 = ok_cb
+		return self
+	end
+	return self
+end, function(ok, value)
+	applied3[#applied3 + 1] = { ok = ok, value = value }
+end)
+refresh3()
+eq(#applied3, 1, "refresher: sync throw applied")
+eq(applied3[1].ok, false, "refresher: sync throw ok=false")
+ok(tostring(applied3[1].value):find("sync boom", 1, true) ~= nil, "refresher: sync throw text")
+throws = false
+refresh3()
+eq(reads3, 2, "refresher: not wedged after sync throw")
+pending3({})
+eq(#applied3, 2, "refresher: recovery after sync throw")
+eq(applied3[2].ok, true, "refresher: recovered after sync throw")
+
 -- ── desktop commands ─────────────────────────────────────────────────
 -- the contract, verbatim; nothing runs on load or on a timer — only an
 -- explicit click reaches zeron.run (structural: this module never

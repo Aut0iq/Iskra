@@ -453,6 +453,15 @@ mod tests {
     }
 
     #[test]
+    fn all_invalid_windows_report_a_problem() {
+        let mut source = cache("devin", ["Day", "Week"]);
+        source["entries"]["devin:fixture"]["usage"]["windows"][0]["usedFraction"] = json!(-0.1);
+        source["entries"]["devin:fixture"]["usage"]["windows"][1]["usedFraction"] = json!(79.0);
+        let reading = parse(&source, NOW);
+        assert_eq!(reading.providers[0].problem, Some("missing-windows"));
+    }
+
+    #[test]
     fn stale_age_and_provider_errors_preserve_last_value_with_marker() {
         let mut source = cache("devin", ["Day", "Week"]);
         let reading = parse(&source, NOW + FRESH_FOR_MS + 1);

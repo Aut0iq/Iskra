@@ -479,3 +479,22 @@ fn completion_episode_survives_interruption_without_refiring() {
     assert!(!d.completion_episode);
     assert_eq!(d.emotion, Emotion::Joy); // back to Joy, spent budget kept
 }
+
+#[test]
+fn chat_meta_accepts_snake_case_fields() {
+    let v = serde_json::json!({
+        "id": "c1",
+        "status": "working",
+        "status_stale": true,
+        "last_message_at": "2026-11-25T00:00:00Z",
+        "parent_chat_id": "p1",
+        "device_id": "dev",
+        "last_turn_outcome": "completed"
+    });
+    let c = ChatMeta::from_json(&v).unwrap();
+    assert!(c.stale);
+    assert_eq!(c.last_message_at.as_deref(), Some("2026-11-25T00:00:00Z"));
+    assert_eq!(c.parent_chat_id.as_deref(), Some("p1"));
+    assert_eq!(c.device_id.as_deref(), Some("dev"));
+    assert_eq!(c.last_turn_outcome.as_deref(), Some("completed"));
+}
