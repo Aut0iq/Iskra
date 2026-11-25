@@ -15,21 +15,35 @@ fn main() {
     let mut raw = PathBuf::from("assets/raw");
     let mut out = PathBuf::from("assets");
     let mut report_path = PathBuf::from("artifacts/prepare-report.json");
-    let args: Vec<String> = std::env::args().skip(1).collect();
+    // args_os + lossy: env::args() panics on non-UTF8 argv.
+    let args: Vec<String> = std::env::args_os()
+        .skip(1)
+        .map(|a| a.to_string_lossy().into_owned())
+        .collect();
     let mut i = 0;
     while i < args.len() {
-        match args[i].as_str() {
+        let flag = args[i].as_str();
+        let value = |i: usize| -> String {
+            match args.get(i) {
+                Some(v) => v.clone(),
+                None => {
+                    eprintln!("{flag} requires a value");
+                    std::process::exit(2);
+                }
+            }
+        };
+        match flag {
             "--raw" => {
                 i += 1;
-                raw = PathBuf::from(args.get(i).expect("--raw DIR"));
+                raw = PathBuf::from(value(i));
             }
             "--out" => {
                 i += 1;
-                out = PathBuf::from(args.get(i).expect("--out DIR"));
+                out = PathBuf::from(value(i));
             }
             "--report" => {
                 i += 1;
-                report_path = PathBuf::from(args.get(i).expect("--report PATH"));
+                report_path = PathBuf::from(value(i));
             }
             other => {
                 eprintln!("usage: zeron-pet-prepare-assets [--raw DIR] [--out DIR] [--report PATH] (got '{other}')");
@@ -69,8 +83,10 @@ fn main() {
     if let Some(parent) = report_path.parent() {
         std::fs::create_dir_all(parent).ok();
     }
-    std::fs::write(&report_path, serde_json::to_string_pretty(&report).unwrap())
-        .expect("write report");
+    if let Err(e) = std::fs::write(&report_path, serde_json::to_string_pretty(&report).unwrap()) {
+        eprintln!("report write failed: {e}");
+        std::process::exit(1);
+    }
 
     for r in &reports {
         println!("{:<14} {}", r.name, r.status);

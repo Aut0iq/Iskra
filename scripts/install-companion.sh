@@ -130,7 +130,9 @@ TMP=$(mktemp -d "$LIB_PARENT/.stage-XXXXXX")
 trap 'rm -rf "$TMP"' EXIT INT TERM
 for item in bin assets README.md THIRD_PARTY_NOTICES.md install.sh \
     LICENSE LICENSE-ARTWORK ARTWORK.md TRADEMARKS.md licenses; do
-    [ -e "$SRC_DIR/$item" ] && cp -a "$SRC_DIR/$item" "$TMP/$item"
+    # A truncated package must fail here, not "install" missing pieces.
+    [ -e "$SRC_DIR/$item" ] || die "package incomplete: missing $item"
+    cp -a "$SRC_DIR/$item" "$TMP/$item"
 done
 printf '%s\n' "$VERSION" > "$TMP/$MARKER"
 

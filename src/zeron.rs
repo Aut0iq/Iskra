@@ -234,7 +234,9 @@ impl Session {
                     if v.get("id").and_then(Value::as_u64) != Some(id) {
                         continue;
                     }
-                    if let Some(err) = v.get("error") {
+                    // An explicit "error": null is a result, not a failure —
+                    // treating it as JsonRpc would loop the reconnect.
+                    if let Some(err) = v.get("error").filter(|e| !e.is_null()) {
                         return Err(TransportError::JsonRpc(err.to_string()));
                     }
                     return v
@@ -268,7 +270,7 @@ pub fn parse_tool_result(result: &Value) -> Result<Value, TransportError> {
     {
         return Err(TransportError::McpError("isError".into()));
     }
-    if let Some(sc) = result.get("structuredContent") {
+    if let Some(sc) = result.get("structuredContent").filter(|v| !v.is_null()) {
         return Ok(sc.clone());
     }
     let mut text = String::new();

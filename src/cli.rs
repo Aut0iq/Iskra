@@ -69,7 +69,8 @@ Control commands (forwarded to the running instance; they fail with
 'not running' when no instance is up):
   --status             print a one-line status summary
   --pause              pause all animation playback
-  --resume             resume animation playback (also clears a drag pin)
+  --resume             resume animation playback (a manually pinned
+                       position survives pause/resume)
   --live               leave demo mode, return to real statuses
   --click-through on|off  make the surface ignore pointer input; recover
                        with `--click-through off` from any terminal

@@ -224,7 +224,14 @@ fn provider_usage(cache: &Cache, provider: Provider, now_ms: u64) -> ProviderUsa
         };
     }
     if out.problem.is_none() {
-        out.problem = if !seen.iter().all(|v| *v) {
+        // Recognized labels whose payloads all failed validation are a
+        // data problem too — never a silent "--" row set.
+        out.problem = if !seen.iter().all(|v| *v)
+            || out
+                .windows
+                .iter()
+                .all(|w| w.state == WindowState::Unavailable)
+        {
             Some("missing-windows")
         } else if stale {
             Some("stale")
@@ -249,13 +256,15 @@ pub fn parse_cache(bytes: &[u8], now_ms: u64) -> Result<UsageSnapshot, serde_jso
 }
 
 pub fn cache_path() -> PathBuf {
-    std::env::var_os("ISKRA_USAGE_CACHE").map_or_else(
-        || {
-            PathBuf::from(std::env::var_os("HOME").unwrap_or_default())
-                .join(".zeron/agent-accounts/usage-cache.json")
-        },
-        PathBuf::from,
-    )
+    if let Some(p) = std::env::var_os("ISKRA_USAGE_CACHE").filter(|p| !p.is_empty()) {
+        return PathBuf::from(p);
+    }
+    match std::env::var_os("HOME").filter(|h| !h.is_empty()) {
+        Some(home) => PathBuf::from(home).join(".zeron/agent-accounts/usage-cache.json"),
+        // With no HOME a CWD-relative path could pick up an unintended
+        // cache; read the guaranteed-missing one instead.
+        None => PathBuf::from("/dev/null"),
+    }
 }
 
 fn read_cache(path: &Path) -> Option<Cache> {

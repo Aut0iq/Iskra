@@ -45,7 +45,7 @@ impl MonitorInfo {
 #[derive(Debug, Clone, PartialEq)]
 pub struct ClientInfo {
     pub mapped: bool,
-    /// Any nonzero fullscreen mode (fullscreen or fullscreenClient).
+    /// Real fullscreen (fullscreen or fullscreenClient >= 2), not maximize.
     pub fullscreen: bool,
     pub workspace: i64,
 }
@@ -66,6 +66,25 @@ fn non_zero(v: Option<&Value>) -> bool {
         Some(Value::Bool(b)) => *b,
         Some(Value::Number(n)) => n.as_i64().unwrap_or(0) != 0,
         _ => false,
+    }
+}
+
+/// True when the client is actually fullscreen. On current Hyprland
+/// `fullscreen`/`fullscreenClient` carry eFullscreenState — 0 none,
+/// 1 maximized, 2 fullscreen, 3 maximized+fullscreen — and a maximized
+/// window does not cover a layer-shell surface. Older builds reported a
+/// plain flag where any nonzero value meant real fullscreen; those
+/// payloads never carry `fullscreenClient`.
+fn real_fullscreen(c: &Value) -> bool {
+    let state = |key: &str| match c.get(key) {
+        Some(Value::Bool(b)) => *b,
+        Some(Value::Number(n)) => n.as_i64().unwrap_or(0) >= 2,
+        _ => false,
+    };
+    if c.get("fullscreenClient").is_some() {
+        state("fullscreen") || state("fullscreenClient")
+    } else {
+        non_zero(c.get("fullscreen"))
     }
 }
 
@@ -124,7 +143,7 @@ pub fn parse_clients(json: &str) -> Result<Vec<ClientInfo>, String> {
     for c in arr {
         out.push(ClientInfo {
             mapped: c.get("mapped").and_then(Value::as_bool).unwrap_or(true),
-            fullscreen: non_zero(c.get("fullscreen")) || non_zero(c.get("fullscreenClient")),
+            fullscreen: real_fullscreen(c),
             workspace: c
                 .get("workspace")
                 .and_then(|w| w.get("id"))

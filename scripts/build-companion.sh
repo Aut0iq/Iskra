@@ -122,7 +122,9 @@ cp "$SCRIPT_DIR/install-companion.sh" "$STAGE/install.sh"
 chmod 0755 "$STAGE/install.sh"
 
 # Repo-root release files, verbatim (checked fail-closed above).
-cp "$REPO_ROOT/LICENSE" "$REPO_ROOT/LICENSE-ARTWORK" \
+# cp -p: plain cp masks modes with the caller's umask, which would make
+# the recorded tar modes host-dependent and break determinism.
+cp -p "$REPO_ROOT/LICENSE" "$REPO_ROOT/LICENSE-ARTWORK" \
    "$REPO_ROOT/ARTWORK.md" "$REPO_ROOT/TRADEMARKS.md" "$STAGE/"
 
 if [ "$FIXTURE" = 1 ]; then
@@ -218,7 +220,9 @@ gzip -n -c "$TMP_TAR" > "$TMP_ARCHIVE"
 
 # Verify members: only relative paths under the package root.
 tar -tzf "$TMP_ARCHIVE" >/dev/null
-if tar -tzf "$TMP_ARCHIVE" | grep -v "^$PKG/" | grep -q .; then
+# Literal prefix match: "$PKG" contains dots (the version), which grep
+# would read as regex wildcards.
+if tar -tzf "$TMP_ARCHIVE" | awk -v p="$PKG/" 'substr($0, 1, length(p)) != p' | grep -q .; then
     echo "error: archive contains paths outside $PKG/" >&2
     exit 2
 fi

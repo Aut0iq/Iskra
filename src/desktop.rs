@@ -1353,6 +1353,13 @@ fn build_ui(
                 let mut s = sh.borrow_mut();
                 s.behavior.cancel(); // popover cancels any captured press
                 refresh_chat_list(&ui, &s);
+                // Middle-click/--pause/--resume all toggle motion without
+                // touching this label; sync it as the popover opens.
+                ui.pause_btn.set_label(if s.motion.enabled {
+                    "Pause anim"
+                } else {
+                    "Resume anim"
+                });
             }
             ui.popover
                 .set_pointing_to(Some(&gdk::Rectangle::new(x as i32, y as i32, 1, 1)));
@@ -1542,7 +1549,7 @@ pub fn run(cli: Cli) -> i32 {
                     cmd.print_literal(&format!("{}\n", sh.borrow().status_line(&d)));
                 }
                 apply_control(sh, ui_slot.borrow().as_ref(), &parsed, app);
-                if parsed.assets.is_some() || parsed.monitor.is_some() {
+                if parsed.assets.is_some() || parsed.monitor.is_some() || parsed.scale != 2 {
                     cmd.printerr_literal(
                         "already running: --assets/--monitor/--scale apply at launch only\n",
                     );
@@ -1742,14 +1749,20 @@ fn tick(
                     // Apply the connector whenever the applied monitor does
                     // not match the stable choice (first apply, --monitor,
                     // or unplug fallback).
+                    // The --monitor pin always wins as `requested`;
+                    // monitor_name tracks the applied connector so the
+                    // pin survives an unplug/replug fallback cycle.
                     if let Some(name) = hyprland::monitor_to_apply(
                         &monitors,
-                        s.monitor_name.as_deref(),
+                        s.cli.monitor.as_deref().or(s.monitor_name.as_deref()),
                         s.applied_monitor.as_deref(),
                     ) {
                         s.monitor_name = Some(name.clone());
-                        set_layer_monitor(ui, &name);
-                        s.applied_monitor = Some(name);
+                        // No matching GDK monitor yet: retry next poll —
+                        // do not record an apply that never happened.
+                        if set_layer_monitor(ui, &name) {
+                            s.applied_monitor = Some(name);
+                        }
                     }
                     // Install the fresh lists BEFORE geometry reads them;
                     // reanchor must use the new monitor's real rectangle.
@@ -2051,9 +2064,11 @@ fn tick(
     apply_input_region(ui, &sh.borrow());
 }
 
-fn set_layer_monitor(ui: &Ui, connector: &str) {
+/// Push the pet surfaces to `connector`. False when no GDK monitor
+/// matches it yet (hotplug races: hyprctl lists the output before GDK).
+fn set_layer_monitor(ui: &Ui, connector: &str) -> bool {
     let Some(display) = gdk::Display::default() else {
-        return;
+        return false;
     };
     let monitors = display.monitors();
     for i in 0..monitors.n_items() {
@@ -2068,9 +2083,10 @@ fn set_layer_monitor(ui: &Ui, connector: &str) {
                 layer_shell::set_monitor(ui.raw_window, m.as_ptr() as *mut c_void);
                 layer_shell::set_monitor(ui.raw_hud, m.as_ptr() as *mut c_void);
             }
-            return;
+            return true;
         }
     }
+    false
 }
 
 #[cfg(test)]

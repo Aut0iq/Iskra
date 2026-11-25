@@ -81,7 +81,9 @@ fn await_response(
         if Instant::now() >= deadline {
             return Err(ProbeError::Timeout);
         }
-        let timeout = (deadline - Instant::now())
+        // saturating: a second Instant::now() may already be past deadline.
+        let timeout = deadline
+            .saturating_duration_since(Instant::now())
             .min(Duration::from_millis(100))
             .as_millis() as libc::c_int;
         let ready = unsafe { libc::poll(&mut pfd, 1, timeout.max(0)) };
@@ -90,6 +92,11 @@ fn await_response(
                 continue;
             }
             return Err(ProbeError::Unavailable);
+        }
+        // A lone POLLERR/POLLNVAL is terminal — re-polling it would spin
+        // at 100% CPU until the deadline.
+        if ready > 0 && pfd.revents & (libc::POLLERR | libc::POLLNVAL) != 0 {
+            return Err(ProbeError::Protocol);
         }
         if ready > 0 && pfd.revents & (libc::POLLIN | libc::POLLHUP) != 0 {
             match stdout.read(&mut chunk) {

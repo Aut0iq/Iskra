@@ -54,7 +54,8 @@ fn no_fullscreen_is_visible() {
 #[test]
 fn fullscreen_on_active_workspace_hides() {
     let m = parse_monitors(&monitors_json()).unwrap();
-    for (fs, fsc) in [(1, 0), (0, 1), (0, 2)] {
+    // eFullscreenState >= 2: 2 = fullscreen, 3 = maximized+fullscreen.
+    for (fs, fsc) in [(2, 0), (0, 2), (3, 0), (0, 3)] {
         let c = parse_clients(&clients_json(&[client(true, fs, fsc, 3)])).unwrap();
         assert!(matches!(
             decide_visibility(&m, &c, "eDP-1"),
@@ -64,13 +65,34 @@ fn fullscreen_on_active_workspace_hides() {
 }
 
 #[test]
+fn maximized_on_active_workspace_does_not_hide() {
+    let m = parse_monitors(&monitors_json()).unwrap();
+    // eFullscreenState 1 = maximized: a maximized window does not cover
+    // a layer-shell surface.
+    for (fs, fsc) in [(1, 0), (0, 1), (1, 1)] {
+        let c = parse_clients(&clients_json(&[client(true, fs, fsc, 3)])).unwrap();
+        assert_eq!(decide_visibility(&m, &c, "eDP-1"), Visibility::Visible);
+    }
+    // Legacy payload without fullscreenClient: nonzero is fullscreen.
+    let c = parse_clients(&clients_json(&[
+        r#"{"mapped":true,"fullscreen":1,"workspace":{"id":3,"name":"3"},"monitor":0}"#
+            .to_string(),
+    ]))
+    .unwrap();
+    assert!(matches!(
+        decide_visibility(&m, &c, "eDP-1"),
+        Visibility::HiddenFullscreen { .. }
+    ));
+}
+
+#[test]
 fn fullscreen_elsewhere_does_not_hide() {
     let m = parse_monitors(&monitors_json()).unwrap();
     // Other workspace, other monitor's workspace, unmapped client.
     for cj in [
-        client(true, 1, 0, 7),
-        client(true, 1, 0, 1), // ws 1 is active on HDMI, not eDP
-        client(false, 1, 0, 3),
+        client(true, 2, 0, 7),
+        client(true, 2, 0, 1), // ws 1 is active on HDMI, not eDP
+        client(false, 2, 0, 3),
     ] {
         let c = parse_clients(&clients_json(&[cj])).unwrap();
         assert_eq!(decide_visibility(&m, &c, "eDP-1"), Visibility::Visible);
@@ -84,7 +106,7 @@ fn special_workspace_fullscreen_hides_when_shown() {
         "activeWorkspace":{"id":3},"specialWorkspace":{"id":-99,"name":"special:magic"}}]"#;
     let m = parse_monitors(j).unwrap();
     assert_eq!(m[0].special_workspace, Some(-99));
-    let c = parse_clients(&clients_json(&[client(true, 1, 0, -99)])).unwrap();
+    let c = parse_clients(&clients_json(&[client(true, 2, 0, -99)])).unwrap();
     assert!(matches!(
         decide_visibility(&m, &c, "eDP-1"),
         Visibility::HiddenFullscreen { .. }
@@ -100,7 +122,7 @@ fn unknown_output_hides_conservatively() {
     let c = parse_clients(&clients_json(&[])).unwrap();
     assert_eq!(decide_visibility(&m, &c, "DP-9"), Visibility::HiddenUnknown);
     // Fullscreen exists somewhere we cannot map: still hidden.
-    let c = parse_clients(&clients_json(&[client(true, 1, 0, 42)])).unwrap();
+    let c = parse_clients(&clients_json(&[client(true, 2, 0, 42)])).unwrap();
     assert!(matches!(
         decide_visibility(&m, &c, "DP-9"),
         Visibility::HiddenFullscreen { .. }
