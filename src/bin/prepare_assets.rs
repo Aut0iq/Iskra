@@ -15,11 +15,19 @@ fn main() {
     let mut raw = PathBuf::from("assets/raw");
     let mut out = PathBuf::from("assets");
     let mut report_path = PathBuf::from("artifacts/prepare-report.json");
-    // args_os + lossy: env::args() panics on non-UTF8 argv.
-    let args: Vec<String> = std::env::args_os()
+    // The JSON report requires UTF-8 paths. Validate before writing assets
+    // rather than silently substituting a different filesystem path.
+    let args: Vec<String> = match std::env::args_os()
         .skip(1)
-        .map(|a| a.to_string_lossy().into_owned())
-        .collect();
+        .map(|a| a.into_string())
+        .collect()
+    {
+        Ok(args) => args,
+        Err(_) => {
+            eprintln!("arguments must be valid UTF-8");
+            std::process::exit(2);
+        }
+    };
     let mut i = 0;
     while i < args.len() {
         let flag = args[i].as_str();
