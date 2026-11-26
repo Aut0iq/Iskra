@@ -405,13 +405,22 @@ function M.command_runner(run, apply)
 		end
 		pending = true
 		apply({ kind = "running", action = action })
-		run(action):after(function(result)
-			pending = false
-			apply({ kind = "done", action = action, result = result })
-		end, function(err)
+		-- A synchronous run() throw (or a non-promise return) must release
+		-- the lock too, or every later click is refused forever — the same
+		-- stall class the usage refresher guards against.
+		local ok, err = pcall(function()
+			run(action):after(function(result)
+				pending = false
+				apply({ kind = "done", action = action, result = result })
+			end, function(run_err)
+				pending = false
+				apply({ kind = "refused", action = action, err = run_err })
+			end)
+		end)
+		if not ok then
 			pending = false
 			apply({ kind = "refused", action = action, err = err })
-		end)
+		end
 		return true
 	end
 end
