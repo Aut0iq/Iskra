@@ -394,7 +394,7 @@ fn strip_launch_flag(args: &[String]) -> Vec<String> {
 /// dropped while still running leaves a zombie if it exits before a
 /// long-lived caller does; the `--launch` CLI exits right away and init
 /// adopts the pet, but library embeddings get a clean reap either way.
-fn reap_async(mut child: Child) {
+pub(crate) fn reap_async(mut child: Child) {
     std::thread::spawn(move || {
         let _ = child.wait();
     });
