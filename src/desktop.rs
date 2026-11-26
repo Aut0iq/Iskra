@@ -7,7 +7,7 @@
 //! compositor state is unknown.
 
 use crate::cli::{self, Cli};
-use crate::{assets, behavior, hyprland, layer_shell, model, motion as mot, usage, zeron};
+use crate::{assets, behavior, hyprland, launcher, layer_shell, model, motion as mot, usage, zeron};
 use gtk4::gdk::prelude::*;
 use gtk4::gio::prelude::ApplicationCommandLineExt;
 use gtk4::glib;
@@ -654,18 +654,23 @@ fn focus_args() -> [&'static str; 2] {
     ["dispatch", r#"hl.dsp.focus({window="class:^zeron$"})"#]
 }
 
+/// Spawn `program` detached; the child is reaped on a background thread,
+/// so each chat jump can't leave a zombie inside the long-lived pet.
+fn spawn_detached(program: &str, args: &[&str]) -> Result<(), std::io::Error> {
+    let child = std::process::Command::new(program).args(args).spawn()?;
+    launcher::reap_async(child);
+    Ok(())
+}
+
 /// Ask the running Zeron instance to open a conversation, then focus its
 /// window via the compositor. Best-effort: failures are logged, never fatal.
 fn jump_to_chat(id: &str) {
     let url = format!("zeron://open/chat/{id}");
-    if let Err(e) = std::process::Command::new("zeron").arg(&url).spawn() {
+    if let Err(e) = spawn_detached("zeron", &[url.as_str()]) {
         log::warn!("open chat spawn failed: {e}");
         return;
     }
-    if let Err(e) = std::process::Command::new("hyprctl")
-        .args(focus_args())
-        .spawn()
-    {
+    if let Err(e) = spawn_detached("hyprctl", &focus_args()) {
         log::warn!("focuswindow dispatch failed: {e}");
     }
 }
@@ -2440,6 +2445,40 @@ mod tests {
             focus_args(),
             ["dispatch", r#"hl.dsp.focus({window="class:^zeron$"})"#]
         );
+    }
+
+    /// The chat-jump process boundary reaps its children: a `Child`
+    /// dropped while running becomes a zombie the pet keeps forever.
+    /// On Linux a reaped child vanishes from /proc; a zombie lingers.
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn spawn_detached_reaps_child() {
+        let dir = unique_tmp("detach");
+        let pidfile = dir.join("pid");
+        let cmd = format!("echo $$ > {}", pidfile.display());
+        spawn_detached("sh", &["-c", cmd.as_str()]).unwrap();
+        let pid: u64 = {
+            let mut found = None;
+            for _ in 0..500 {
+                if let Ok(s) = std::fs::read_to_string(&pidfile) {
+                    if let Ok(p) = s.trim().parse::<u64>() {
+                        found = Some(p);
+                        break;
+                    }
+                }
+                std::thread::sleep(Duration::from_millis(10));
+            }
+            found.expect("helper never wrote its pid")
+        };
+        let proc_entry = PathBuf::from(format!("/proc/{pid}"));
+        for _ in 0..500 {
+            if !proc_entry.exists() {
+                std::fs::remove_dir_all(&dir).unwrap();
+                return;
+            }
+            std::thread::sleep(Duration::from_millis(10));
+        }
+        panic!("spawned helper was left as a zombie at /proc/{pid}");
     }
 
     /// GTK regression for the triple-click SIGABRT and the follow-on

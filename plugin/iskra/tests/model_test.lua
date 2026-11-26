@@ -400,6 +400,33 @@ eq(states[#states].kind, "refused", "runner: refused kind")
 eq(states[#states].err, "denied", "runner: error passed through")
 eq(run("status"), true, "runner: free again after refusal")
 
+-- synchronous throw: run() raising before returning a promise must
+-- release the lock, or every later click is refused forever — the same
+-- stall the usage refresher's sync-throw test covers
+local throws4 = true
+local pending4
+local states4 = {}
+local run4 = model.command_runner(function()
+	if throws4 then
+		error("sync boom")
+	end
+	local self = {}
+	function self:after(ok_cb)
+		pending4 = ok_cb
+		return self
+	end
+	return self
+end, function(state)
+	states4[#states4 + 1] = state
+end)
+eq(run4("status"), true, "runner: sync throw still accepts the click")
+eq(states4[#states4].kind, "refused", "runner: sync throw applies refused")
+ok(tostring(states4[#states4].err):find("sync boom", 1, true) ~= nil, "runner: sync throw error text")
+throws4 = false
+eq(run4("pause"), true, "runner: lock released after sync throw")
+pending4({ status = 0 })
+eq(states4[#states4].kind, "done", "runner: recovery after sync throw")
+
 -- ── sorted_sessions() ────────────────────────────────────────────────
 local list = model.sorted_sessions({
 	x = { id = "x", updated = 10 },
