@@ -7,7 +7,9 @@
 //! compositor state is unknown.
 
 use crate::cli::{self, Cli};
-use crate::{assets, behavior, hyprland, launcher, layer_shell, model, motion as mot, usage, zeron};
+use crate::{
+    assets, behavior, hyprland, launcher, layer_shell, model, motion as mot, usage, zeron,
+};
 use gtk4::gdk::prelude::*;
 use gtk4::gio::prelude::ApplicationCommandLineExt;
 use gtk4::glib;
