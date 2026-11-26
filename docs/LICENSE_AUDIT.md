@@ -59,6 +59,13 @@ that line gives the previous lockfile byte for byte. All 100 snapshot
 package records and all 193 license texts were preserved, with each text's
 SHA256 checked before updating the lockfile pin.
 
+## 0.2.2 lockfile review
+
+Only the root `zeron-pet` version changed from 0.2.1 to 0.2.2. Reverting
+that line gives the previous lockfile byte for byte. All 100 snapshot
+package records and all 193 license texts were preserved, with each text's
+SHA256 checked before updating the lockfile pin.
+
 ## Release checks still separate from source publication
 
 Latest-version live smoke, human signing/consent and signed export review
