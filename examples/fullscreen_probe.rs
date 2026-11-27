@@ -2,10 +2,17 @@
 //! for ~2.5s then restores and exits. Used to verify the pet's hide/show
 //! behavior without touching any user application.
 
+#[cfg(not(unix))]
+fn main() {}
+
+#[cfg(unix)]
 use gtk4::glib;
+#[cfg(unix)]
 use gtk4::prelude::*;
+#[cfg(unix)]
 use std::time::Duration;
 
+#[cfg(unix)]
 fn main() {
     let app = gtk4::Application::new(
         Some("dev.zeron.pet.fullscreen-probe"),

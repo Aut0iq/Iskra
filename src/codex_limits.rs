@@ -1,7 +1,6 @@
 //! Quota normalization and source selection; no credentials or IO.
 
 use crate::usage::{Provider, ProviderUsage, UsageSource, WindowState, WindowUsage};
-use gtk4::glib;
 use serde_json::{json, Value};
 use std::time::Duration;
 
@@ -144,14 +143,11 @@ pub fn normalize(
         else {
             continue;
         };
-        let Some(reset_text) = glib::DateTime::from_unix_utc(seconds)
-            .ok()
-            .and_then(|dt| dt.format("%Y-%m-%dT%H:%M:%SZ").ok())
-        else {
+        let Some(reset_text) = crate::timefmt::format_utc(seconds) else {
             continue;
         };
         let row = &mut out.windows[i];
-        row.resets_at = Some(reset_text.to_string());
+        row.resets_at = Some(reset_text);
         if reset_ms <= now_ms {
             row.state = WindowState::ResetPending;
             continue;

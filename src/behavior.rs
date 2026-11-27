@@ -628,6 +628,8 @@ mod tests {
             logical_w: w,
             logical_h: h,
             reserved: [0, top, 0, 0],
+            work_x: 0,
+            work_y: 0,
             focused: false,
             active_workspace: 1,
             special_workspace: None,

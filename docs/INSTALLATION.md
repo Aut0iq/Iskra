@@ -17,7 +17,7 @@ If you developed Iskra locally, export and preserve your work first. Remove
 that development copy through Zeron Settings before installing the release.
 A developer-folder install is not the public update channel.
 
-## Optional desktop — Linux x86_64 only
+## Optional desktop — Linux x86_64 and Windows x86_64
 
 Download the desktop tarball and SHA256SUMS from the stable release. Verify
 the tarball checksum, extract it and run its install.sh. This installs
@@ -28,6 +28,27 @@ No application or autostart is started by the installer.
 Launch the installed executable. Do not launch an old checkout's run.sh:
 it can carry old assets. Updates use the next release's archive/installer.
 The optional panel bridge is documented in ASHELL.md.
+
+### Windows (source build)
+
+The Win32 port is a portable `zeron-pet.exe`: a topmost layered window
+updated via `UpdateLayeredWindow`, plus a matching HUD window; single
+instance via a session mutex + named pipe. It builds without MSVC or a
+mingw toolchain through the `x86_64-pc-windows-gnullvm` Rust target —
+repo `.cargo/config.toml` already pins `rust-lld` + `crt-static`:
+
+```powershell
+rustup toolchain install 1.96.0-x86_64-pc-windows-gnullvm
+cargo +1.96.0-x86_64-pc-windows-gnullvm build --release \
+  --target x86_64-pc-windows-gnullvm
+```
+
+`--monitor` takes the Windows device name (`DISPLAY2`), shown by
+`EnumDisplayMonitors` in `winmon`. Fullscreen detection only hides the pet
+on the monitor hosting the fullscreen window; maximized windows do not
+count. Control flags (`--status`, `--pause`, `--click-through on|off`,
+`--quit`) forward over the named pipe to the running instance, same as on
+Wayland.
 
 ## Nightly channel
 

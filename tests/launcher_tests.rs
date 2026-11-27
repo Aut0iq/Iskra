@@ -2,6 +2,7 @@
 //! executables. Each fixture is a shell script under a private temp dir;
 //! every test kills only the pids its own fixtures recorded and removes
 //! only its own directory.
+#![cfg(unix)]
 
 use std::fs;
 use std::path::{Path, PathBuf};
