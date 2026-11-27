@@ -64,22 +64,29 @@ read-only empty database, so grep is the working path.
 ## Branches, CI and delivery (mandatory)
 
 - Never push main or create/move/delete release/nightly tags. All work starts
-  from dev in feature-name or bugfix-name. External contributors use forks;
-  upstream write ACL remains owner plus the scoped automation App.
-- PRs target dev. Only upstream dev may target main. CI performs promotion
-  after the required CI Gate succeeds. No bypass, force push or skipped gate.
-- A direct dev push is owner-only and exceptional: warn and require explicit
-  acknowledgement through the pre-push hook. Prefer PRs even for the owner.
+  from dev in feature-name or bugfix-name. External contributors use forks.
+  After the documented rollout, upstream Write is limited to Energy-Quant and
+  explicitly invited Aut0iq; the scoped automation App is separate.
+- PRs target dev. Direct human dev pushes are disabled; routine dev PRs merge
+  through GitHub only after their own CI Gate. Only upstream dev may target
+  main, and only the App merges that exact green PR. No bypass, force push or
+  skipped gate.
+- `.github/`, `.githooks/`, `scripts/` and `AGENTS.md` are owner-governed
+  control-plane paths requiring owner code-owner review. The owner-only PR
+  bypass is that review layer only, never a status-check bypass.
 - Install the local hook with git config core.hooksPath .githooks. It is
   feedback; native GitHub rules are the actual security boundary.
-- The dedicated automation App is required for strict CI-only tags/updates.
-  Never weaken rules to make a release succeed or use an owner's token as
-  the permanent bypass. If App provisioning is absent, publishing stays closed.
+- The dedicated automation App is required for promotion, strict CI-only
+  tags/updates and delivery. There is no GITHUB_TOKEN bootstrap promotion.
+  Never weaken rules to make a release succeed or use an owner's token as the
+  permanent bypass. If App provisioning is absent, publishing stays closed.
 - Stable tags/releases originate from current main and a fully green exact-SHA
   CI run. Dev produces immutable nightly tags with UNSIGNED staging marked
   as such. Never publish unsigned staging as an installable plugin.
 - Zeron signing/export and permission consent remain human-only. CI verifies
   the public Ed25519 signature and exact reviewed payload, never signs.
+  Repository Write is not signer enrollment; a new signer requires tested
+  upgrade-path verification and an owner-reviewed public-key trust update.
 - Windows/macOS packages are portable Zeron plugins/avatar tools. The native
   desktop companion runs on Linux/Wayland (GTK4 + gtk4-layer-shell) and on
   Windows via the reviewed Win32 layered-window port (`desktop_win.rs`);
