@@ -1,5 +1,4 @@
 //! Read-only subscription measurements from Zeron's normalized usage cache.
-use gtk4::glib;
 use serde::Deserialize;
 use std::collections::BTreeMap;
 use std::io::Read;
@@ -150,8 +149,8 @@ fn reset_millis(text: &str) -> Option<u64> {
     if !time.ends_with('Z') && !time.contains('+') && !time.contains('-') {
         return None;
     }
-    let dt = glib::DateTime::from_iso8601(text, None).ok()?;
-    u64::try_from(dt.to_unix()).ok()?.checked_mul(1000)
+    let secs = crate::timefmt::parse_iso8601_unix(text)?;
+    u64::try_from(secs).ok()?.checked_mul(1000)
 }
 
 fn provider_usage(cache: &Cache, provider: Provider, now_ms: u64) -> ProviderUsage {
@@ -259,11 +258,11 @@ pub fn cache_path() -> PathBuf {
     if let Some(p) = std::env::var_os("ISKRA_USAGE_CACHE").filter(|p| !p.is_empty()) {
         return PathBuf::from(p);
     }
-    match std::env::var_os("HOME").filter(|h| !h.is_empty()) {
-        Some(home) => PathBuf::from(home).join(".zeron/agent-accounts/usage-cache.json"),
-        // With no HOME a CWD-relative path could pick up an unintended
+    match crate::paths::home_dir() {
+        Some(home) => home.join(".zeron/agent-accounts/usage-cache.json"),
+        // With no home a CWD-relative path could pick up an unintended
         // cache; read the guaranteed-missing one instead.
-        None => PathBuf::from("/dev/null"),
+        None => PathBuf::from(if cfg!(windows) { "NUL" } else { "/dev/null" }),
     }
 }
 

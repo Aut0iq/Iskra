@@ -8,12 +8,30 @@
 //! RGBA PNGs with nonempty alpha; malformed or outside-root paths are
 //! rejected per-animation while valid art is kept.
 
+#[cfg(unix)]
 use gdk_pixbuf::{InterpType, Pixbuf};
+#[cfg(unix)]
 use gtk4::gdk;
 use serde_json::Value;
 use std::collections::HashMap;
 use std::path::{Component, Path, PathBuf};
 use std::time::SystemTime;
+
+/// One decoded, display-scaled animation frame.
+/// Unix keeps it as a GDK paintable texture; Windows stores premultiplied
+/// BGRA ready for `UpdateLayeredWindow` / a 32bpp DIB section.
+#[cfg(unix)]
+pub type Frame = gdk::Texture;
+
+/// One decoded, display-scaled animation frame as premultiplied BGRA
+/// (color channels already multiplied by alpha, byte order B,G,R,A).
+#[cfg(windows)]
+#[derive(Debug, Clone)]
+pub struct Frame {
+    pub w: i32,
+    pub h: i32,
+    pub bgra: std::sync::Arc<[u8]>,
+}
 
 pub const FRAME_W: u32 = 96;
 pub const FRAME_H: u32 = 128;
@@ -263,16 +281,15 @@ pub fn resolve_rel(root: &Path, rel: &str) -> Option<PathBuf> {
     Some(out)
 }
 
-/// Opaque (alpha > 0) bounding box of a pixbuf; `None` when fully empty.
-pub fn alpha_bounds(pb: &Pixbuf) -> Option<(i32, i32, i32, i32)> {
-    if !pb.has_alpha() {
-        return Some((0, 0, pb.width(), pb.height()));
-    }
-    let w = pb.width() as usize;
-    let h = pb.height() as usize;
-    let stride = pb.rowstride() as usize;
-    let nch = pb.n_channels() as usize;
-    let data = unsafe { pb.pixels() };
+/// Opaque (alpha > 0) bounding box of raw pixels; `None` when fully
+/// transparent. `nch` is the channel count, alpha is the last channel.
+fn alpha_bounds_px(
+    w: usize,
+    h: usize,
+    stride: usize,
+    nch: usize,
+    data: &[u8],
+) -> Option<(i32, i32, i32, i32)> {
     let mut min_x = w;
     let mut min_y = h;
     let mut max_x = 0usize;
@@ -300,6 +317,120 @@ pub fn alpha_bounds(pb: &Pixbuf) -> Option<(i32, i32, i32, i32)> {
     })
 }
 
+/// Opaque (alpha > 0) bounding box of a pixbuf; `None` when fully empty.
+#[cfg(unix)]
+pub fn alpha_bounds(pb: &Pixbuf) -> Option<(i32, i32, i32, i32)> {
+    if !pb.has_alpha() {
+        return Some((0, 0, pb.width(), pb.height()));
+    }
+    alpha_bounds_px(
+        pb.width() as usize,
+        pb.height() as usize,
+        pb.rowstride() as usize,
+        pb.n_channels() as usize,
+        unsafe { pb.pixels() },
+    )
+}
+
+/// Decode `path`, validate the source size and alpha channel, scale to
+/// `out_w`x`out_h` (nearest for pixel art, smooth for the V2 profile) and
+/// return the frame plus the *source* opaque bounds; callers rescale the
+/// bounds into output pixels.
+type DecodedFrame = (Frame, (i32, i32, i32, i32));
+
+#[cfg(unix)]
+fn decode_frame(
+    path: &Path,
+    src_w: i32,
+    src_h: i32,
+    out_w: i32,
+    out_h: i32,
+    smooth: bool,
+) -> Result<DecodedFrame, String> {
+    let rel = path.display();
+    let pb = Pixbuf::from_file(path).map_err(|e| format!("{rel}: {e}"))?;
+    if !pb.has_alpha() {
+        return Err(format!("{rel}: RGB frame without alpha channel"));
+    }
+    if pb.width() != src_w || pb.height() != src_h {
+        return Err(format!(
+            "{rel}: {}x{} != {src_w}x{src_h}",
+            pb.width(),
+            pb.height()
+        ));
+    }
+    let b = alpha_bounds(&pb).ok_or_else(|| format!("{rel}: fully transparent frame"))?;
+    let scaled = pb
+        .scale_simple(
+            out_w,
+            out_h,
+            if smooth {
+                InterpType::Bilinear
+            } else {
+                InterpType::Nearest
+            },
+        )
+        .ok_or_else(|| format!("{rel}: scale failed"))?;
+    Ok((gdk::Texture::for_pixbuf(&scaled), b))
+}
+
+#[cfg(windows)]
+fn decode_frame(
+    path: &Path,
+    src_w: i32,
+    src_h: i32,
+    out_w: i32,
+    out_h: i32,
+    smooth: bool,
+) -> Result<DecodedFrame, String> {
+    let rel = path.display();
+    let img = image::open(path).map_err(|e| format!("{rel}: {e}"))?;
+    let rgba = img.to_rgba8();
+    if img.color().channel_count() < 4 {
+        return Err(format!("{rel}: RGB frame without alpha channel"));
+    }
+    if rgba.width() != src_w as u32 || rgba.height() != src_h as u32 {
+        return Err(format!(
+            "{rel}: {}x{} != {src_w}x{src_h}",
+            rgba.width(),
+            rgba.height()
+        ));
+    }
+    let b = alpha_bounds_px(
+        src_w as usize,
+        src_h as usize,
+        rgba.width() as usize * 4,
+        4,
+        rgba.as_raw(),
+    )
+    .ok_or_else(|| format!("{rel}: fully transparent frame"))?;
+    let scaled = image::imageops::resize(
+        &rgba,
+        out_w.max(1) as u32,
+        out_h.max(1) as u32,
+        if smooth {
+            image::imageops::FilterType::Triangle
+        } else {
+            image::imageops::FilterType::Nearest
+        },
+    );
+    // RGBA -> premultiplied BGRA for UpdateLayeredWindow.
+    let mut bgra = Vec::with_capacity(scaled.as_raw().len());
+    for px in scaled.as_raw().chunks_exact(4) {
+        let (r, g, bl, a) = (px[0] as u32, px[1] as u32, px[2] as u32, px[3] as u32);
+        let pm = |c: u32| ((c * a + 127) / 255) as u8;
+        bgra.extend_from_slice(&[pm(bl), pm(g), pm(r), a as u8]);
+    }
+    Ok((
+        Frame {
+            w: out_w,
+            h: out_h,
+            bgra: bgra.into(),
+        },
+        b,
+    ))
+}
+
 fn union_bounds(a: Option<(i32, i32, i32, i32)>, b: (i32, i32, i32, i32)) -> (i32, i32, i32, i32) {
     match a {
         None => b,
@@ -311,8 +442,8 @@ fn union_bounds(a: Option<(i32, i32, i32, i32)>, b: (i32, i32, i32, i32)) -> (i3
 pub struct Animation {
     pub name: String,
     pub frame_ms: u64,
-    /// Textures already upscaled (nearest for V1, bilinear for V2).
-    pub frames: Vec<gdk::Texture>,
+    /// Frames already upscaled (nearest for V1, smooth for V2).
+    pub frames: Vec<Frame>,
     /// Union opaque bounds across frames, in displayed (scaled) pixels.
     pub opaque_bounds: (i32, i32, i32, i32),
     /// Contact point normalized 0..1 within the frame (V2 only).
@@ -358,33 +489,20 @@ fn load_animation(
     for rel in &entry.frames {
         let path =
             resolve_rel(root, rel).ok_or_else(|| format!("'{rel}' escapes the asset root"))?;
-        let pb = Pixbuf::from_file(&path).map_err(|e| format!("{rel}: {e}"))?;
-        if !pb.has_alpha() {
-            return Err(format!("{rel}: RGB frame without alpha channel"));
-        }
-        if pb.width() != FRAME_W as i32 || pb.height() != FRAME_H as i32 {
-            return Err(format!(
-                "{rel}: {}x{} != {}x{}",
-                pb.width(),
-                pb.height(),
-                FRAME_W,
-                FRAME_H
-            ));
-        }
-        let b = alpha_bounds(&pb).ok_or_else(|| format!("{rel}: fully transparent frame"))?;
         let scale_i = scale as i32;
-        let scaled = pb
-            .scale_simple(
-                FRAME_W as i32 * scale_i,
-                FRAME_H as i32 * scale_i,
-                InterpType::Nearest,
-            )
-            .ok_or_else(|| format!("{rel}: scale failed"))?;
+        let (frame, b) = decode_frame(
+            &path,
+            FRAME_W as i32,
+            FRAME_H as i32,
+            FRAME_W as i32 * scale_i,
+            FRAME_H as i32 * scale_i,
+            false,
+        )?;
         ub = Some(union_bounds(
             ub,
             (b.0 * scale_i, b.1 * scale_i, b.2 * scale_i, b.3 * scale_i),
         ));
-        frames.push(gdk::Texture::for_pixbuf(&scaled));
+        frames.push(frame);
     }
     Ok(Animation {
         name: name.to_string(),
@@ -420,23 +538,7 @@ fn load_animation_v2(
     for rel in &entry.frames {
         let path =
             resolve_rel(root, rel).ok_or_else(|| format!("'{rel}' escapes the asset root"))?;
-        let pb = Pixbuf::from_file(&path).map_err(|e| format!("{rel}: {e}"))?;
-        if !pb.has_alpha() {
-            return Err(format!("{rel}: RGB frame without alpha channel"));
-        }
-        if pb.width() != V2_FRAME as i32 || pb.height() != V2_FRAME as i32 {
-            return Err(format!(
-                "{rel}: {}x{} != {}x{}",
-                pb.width(),
-                pb.height(),
-                V2_FRAME,
-                V2_FRAME
-            ));
-        }
-        let b = alpha_bounds(&pb).ok_or_else(|| format!("{rel}: fully transparent frame"))?;
-        let scaled = pb
-            .scale_simple(out_w, out_h, InterpType::Bilinear)
-            .ok_or_else(|| format!("{rel}: scale failed"))?;
+        let (frame, b) = decode_frame(&path, V2_FRAME as i32, V2_FRAME as i32, out_w, out_h, true)?;
         // Bounds rescale: source bounds -> output pixels.
         let sx = out_w as f64 / V2_FRAME as f64;
         let sy = out_h as f64 / V2_FRAME as f64;
@@ -449,7 +551,7 @@ fn load_animation_v2(
                 (b.3 as f64 * sy) as i32,
             ),
         ));
-        frames.push(gdk::Texture::for_pixbuf(&scaled));
+        frames.push(frame);
     }
     let contact = entry
         .contact

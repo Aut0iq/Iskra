@@ -81,7 +81,9 @@ read-only empty database, so grep is the working path.
 - Zeron signing/export and permission consent remain human-only. CI verifies
   the public Ed25519 signature and exact reviewed payload, never signs.
 - Windows/macOS packages are portable Zeron plugins/avatar tools. The native
-  desktop companion is Linux/Wayland-only until an actual reviewed port.
+  desktop companion runs on Linux/Wayland (GTK4 + gtk4-layer-shell) and on
+  Windows via the reviewed Win32 layered-window port (`desktop_win.rs`);
+  macOS remains unported.
 - Avatar packs are data/images only. Preserve authorship/licensing, validate
   paths, alpha/dimensions and size, and reject symlinks or executable content.
   Runtime theme/avatar switching is not shipped by defining a schema.

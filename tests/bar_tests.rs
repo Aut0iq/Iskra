@@ -1,4 +1,5 @@
 //! Tray routing is verified with fake executables, never a running companion.
+#![cfg(unix)]
 use std::io::{BufRead, BufReader};
 use std::os::unix::fs::PermissionsExt;
 use std::path::PathBuf;

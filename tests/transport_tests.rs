@@ -1,5 +1,6 @@
 //! Transport fixtures against a fake stdio MCP child. The fixture is
 //! test-authored; no production binary or data is touched.
+#![cfg(unix)]
 
 use std::ffi::OsString;
 use std::path::{Path, PathBuf};
