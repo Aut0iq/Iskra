@@ -28,9 +28,10 @@ The plugin/avatar tools are portable; the desktop pet is Linux/Wayland only —
 she knows where she's welcome. [Full installation guide](docs/INSTALLATION.md) ·
 [Desktop & ashell](docs/ASHELL.md) · [Make your avatar](docs/AVATARS.md)
 
-Building with us? [Contributing](CONTRIBUTING.md) · [Development & delivery](docs/DEVELOPMENT.md).
-Nightlies are unsigned developer previews — fun, but not signed. Stable keys
-stay home, like a responsible flame.
+Building with us? [Contributing](CONTRIBUTING.md) · [Development & delivery](docs/DEVELOPMENT.md) ·
+[Maintainer rollout](docs/DEVELOPMENT.md#maintainer-access-rollout) — planned access,
+not active Write until that rollout is complete. Nightlies are unsigned developer
+previews — fun, but not signed. Stable keys stay home, like a responsible flame.
 
 ## Thanks to
 

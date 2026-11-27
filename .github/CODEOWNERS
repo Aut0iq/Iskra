@@ -1,4 +1,4 @@
-* @Energy-Quant
 /.github/ @Energy-Quant
+/.githooks/ @Energy-Quant
+/scripts/ @Energy-Quant
 /AGENTS.md @Energy-Quant
-/scripts/verify-signed-plugin.py @Energy-Quant
