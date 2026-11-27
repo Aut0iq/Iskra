@@ -18,7 +18,6 @@ use gtk4::prelude::*;
 use gtk4::{gdk, gio};
 use std::cell::RefCell;
 use std::ffi::{c_void, CString};
-use std::path::PathBuf;
 use std::rc::Rc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{mpsc, Arc, Mutex};
@@ -1177,6 +1176,7 @@ fn set_layer_monitor(ui: &Ui, connector: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::path::PathBuf;
 
     #[test]
     fn idle_ambient_back_dance_cycle() {
