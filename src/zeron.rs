@@ -9,6 +9,7 @@ use crate::model::{ChatMeta, Snapshot};
 use serde_json::{json, Value};
 use std::ffi::OsStr;
 use std::io::{BufRead, BufReader, Read, Write};
+#[cfg(unix)]
 use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 use std::process::{Child, ChildStdin, Command, Stdio};
@@ -33,11 +34,23 @@ const BACKOFF: [Duration; 5] = [
     Duration::from_secs(15),
 ];
 
+#[cfg(unix)]
 fn is_executable_file(path: &Path) -> bool {
     let Ok(meta) = path.metadata() else {
         return false;
     };
     meta.is_file() && meta.permissions().mode() & 0o111 != 0
+}
+
+#[cfg(windows)]
+fn is_executable_file(path: &Path) -> bool {
+    // Windows has no mode bits: CreateProcess only runs files whose
+    // extension PATHEXT covers — .exe for the candidates we probe.
+    path.is_file()
+        && path
+            .extension()
+            .and_then(|e| e.to_str())
+            .is_some_and(|e| e.eq_ignore_ascii_case("exe"))
 }
 
 fn resolve_program(override_env: Option<&OsStr>, home: Option<&Path>) -> PathBuf {
@@ -46,9 +59,11 @@ fn resolve_program(override_env: Option<&OsStr>, home: Option<&Path>) -> PathBuf
     }
     if let Some(home) = home.filter(|h| !h.as_os_str().is_empty()) {
         for rel in [".local/bin/zeron", ".zeron/app/current/zeron"] {
-            let candidate = home.join(rel);
-            if is_executable_file(&candidate) {
-                return candidate;
+            for suffix in ["", ".exe"] {
+                let candidate = home.join(format!("{rel}{suffix}"));
+                if is_executable_file(&candidate) {
+                    return candidate;
+                }
             }
         }
     }
@@ -58,7 +73,7 @@ fn resolve_program(override_env: Option<&OsStr>, home: Option<&Path>) -> PathBuf
 pub fn zeron_program() -> PathBuf {
     resolve_program(
         std::env::var_os("ISKRA_ZERON").as_deref(),
-        std::env::var_os("HOME").map(PathBuf::from).as_deref(),
+        crate::paths::home_dir().as_deref(),
     )
 }
 
@@ -426,7 +441,8 @@ pub fn spawn_worker(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::os::unix::fs::symlink;
+    #[cfg(unix)]
+    use std::os::unix::fs::{symlink, PermissionsExt};
     use std::time::{SystemTime, UNIX_EPOCH};
 
     #[test]
@@ -457,15 +473,22 @@ mod tests {
     fn make_executable(path: &Path) {
         std::fs::create_dir_all(path.parent().unwrap()).unwrap();
         std::fs::write(path, "#!/bin/sh\nexit 0\n").unwrap();
-        let mut p = std::fs::metadata(path).unwrap().permissions();
-        p.set_mode(0o755);
-        std::fs::set_permissions(path, p).unwrap();
+        #[cfg(unix)]
+        {
+            let mut p = std::fs::metadata(path).unwrap().permissions();
+            p.set_mode(0o755);
+            std::fs::set_permissions(path, p).unwrap();
+        }
     }
 
     fn user_launcher(home: &Path) -> PathBuf {
+        #[cfg(windows)]
+        return home.join(".local/bin/zeron.exe");
+        #[cfg(not(windows))]
         home.join(".local/bin/zeron")
     }
 
+    #[cfg(unix)]
     fn bundled(home: &Path) -> PathBuf {
         home.join(".zeron/app/current/zeron")
     }
@@ -492,6 +515,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(unix)] // extensionless candidate files are executables on unix only
     fn user_launcher_preferred_over_bundled() {
         let home = tmpdir("both");
         make_executable(&user_launcher(&home));
@@ -500,6 +524,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(unix)] // nonexec/symlink semantics are unix mode bits
     fn bundled_fallback_for_unusable_user_launcher() {
         for tag in ["absent", "nonexec", "directory", "broken-link"] {
             let home = tmpdir(tag);
@@ -522,6 +547,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(unix)] // symlink fixture
     fn executable_symlink_counts_as_candidate() {
         let home = tmpdir("symlink");
         let target = home.join("real-zeron");
@@ -530,6 +556,22 @@ mod tests {
         std::fs::create_dir_all(link.parent().unwrap()).unwrap();
         symlink(&target, &link).unwrap();
         assert_eq!(resolve_program(None, Some(&home)), link);
+    }
+
+    #[test]
+    #[cfg(windows)] // only .exe files count as executable candidates
+    fn exe_candidate_is_found() {
+        let home = tmpdir("exe");
+        make_executable(&home.join(".local/bin/zeron.exe"));
+        assert_eq!(
+            resolve_program(None, Some(&home)),
+            home.join(".local/bin/zeron.exe")
+        );
+        // An extensionless file is not executable on Windows.
+        let bare = tmpdir("bare-exe");
+        std::fs::create_dir_all(bare.join(".local/bin")).unwrap();
+        std::fs::write(bare.join(".local/bin/zeron"), "x").unwrap();
+        assert_eq!(resolve_program(None, Some(&bare)), PathBuf::from("zeron"));
     }
 
     #[test]

@@ -13,8 +13,8 @@ fn pet_binary() -> PathBuf {
     if let Some(path) = std::env::var_os("ISKRA_PET_BIN").filter(|p| !p.is_empty()) {
         return PathBuf::from(path);
     }
-    std::env::var_os("HOME")
-        .map(|home| PathBuf::from(home).join(".local/bin/zeron-pet"))
+    zeron_pet::paths::home_dir()
+        .map(|home| home.join(".local/bin/zeron-pet"))
         .unwrap_or_else(|| PathBuf::from("zeron-pet"))
 }
 
@@ -321,6 +321,8 @@ mod tests {
         assert_eq!(action_args("toggle"), None);
     }
 
+    // These two spawn /bin/sh fixtures — unix-only by construction.
+    #[cfg(unix)]
     #[test]
     fn run_cmd_times_out_on_hanging_child() {
         // Closes stdout then sleeps: must fail fast, not wait forever.
@@ -338,6 +340,7 @@ mod tests {
         );
     }
 
+    #[cfg(unix)]
     #[test]
     fn run_cmd_normal_output() {
         let (ok, out) = run_cmd("/bin/sh", &["-c", "echo hi"], Duration::from_secs(2));

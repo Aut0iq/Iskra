@@ -3,13 +3,18 @@
 //! the compositor cannot be determined, callers must hide conservatively.
 
 use serde_json::Value;
+#[cfg(unix)]
 use std::io::Read;
+#[cfg(unix)]
 use std::process::{Command, Stdio};
+#[cfg(unix)]
 use std::sync::mpsc;
+#[cfg(unix)]
 use std::sync::{
     atomic::{AtomicBool, Ordering},
     Arc,
 };
+#[cfg(unix)]
 use std::thread;
 use std::time::Duration;
 
@@ -25,6 +30,11 @@ pub struct MonitorInfo {
     pub logical_h: i32,
     /// Reserved margins [left, top, right, bottom] in logical pixels.
     pub reserved: [i32; 4],
+    /// Virtual-screen position of the usable area's top-left corner:
+    /// margin space (0,0) maps to (work_x, work_y) in absolute screen
+    /// coordinates. Always 0 on Wayland where margins are per-output.
+    pub work_x: i32,
+    pub work_y: i32,
     pub focused: bool,
     pub active_workspace: i64,
     /// Set when a special workspace is currently shown on this output.
@@ -125,6 +135,8 @@ pub fn parse_monitors(json: &str) -> Result<Vec<MonitorInfo>, String> {
             logical_w,
             logical_h,
             reserved,
+            work_x: 0,
+            work_y: 0,
             focused: get("focused").and_then(Value::as_bool).unwrap_or(false),
             active_workspace: get("activeWorkspace")
                 .and_then(|s| s.get("id"))
@@ -255,6 +267,7 @@ pub fn usable_bounds(mon: &MonitorInfo, win_w: i32, win_h: i32) -> Bounds {
 }
 
 /// Run one bounded `hyprctl` query; kills the child on timeout.
+#[cfg(unix)]
 pub fn run_json_cmd(args: &[&str], timeout: Duration) -> Result<String, String> {
     let mut child = Command::new("hyprctl")
         .args(args)
@@ -294,6 +307,7 @@ pub enum HyprEvent {
 }
 
 /// Poll monitors+clients at POLL_INTERVAL until `stop` is set.
+#[cfg(unix)]
 pub fn spawn_poller(tx: mpsc::Sender<HyprEvent>, stop: Arc<AtomicBool>) -> thread::JoinHandle<()> {
     thread::Builder::new()
         .name("hyprland-poll".to_string())

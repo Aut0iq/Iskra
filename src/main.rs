@@ -1,8 +1,13 @@
 //! zeron-pet entry point: CLI parse, compositor capability check, then the
-//! single-instance GTK application.
+//! single-instance desktop application (GTK layer-shell on unix, Win32
+//! layered windows on Windows).
 
 use std::time::Duration;
-use zeron_pet::{cli, desktop, launcher, layer_shell};
+#[cfg(windows)]
+use zeron_pet::desktop_win;
+use zeron_pet::{cli, launcher};
+#[cfg(unix)]
+use zeron_pet::{desktop, layer_shell};
 
 fn main() {
     env_logger::init();
@@ -23,9 +28,9 @@ fn main() {
         return;
     }
 
-    // --launch is resolved before any GTK initialization: it probes and, if
-    // needed, cold-starts a detached pet, then returns without touching the
-    // display server itself.
+    // --launch is resolved before any desktop initialization: it probes
+    // and, if needed, cold-starts a detached pet, then returns without
+    // touching the display server itself.
     if cli.launch {
         let exe = match std::env::current_exe() {
             Ok(p) => p,
@@ -45,17 +50,21 @@ fn main() {
     }
 
     // Honest compositor support check before claiming a layer surface.
-    if gtk4::init().is_err() {
-        eprintln!("zeron-pet: cannot initialize GTK (no Wayland display?)");
-        std::process::exit(3);
+    #[cfg(unix)]
+    {
+        if gtk4::init().is_err() {
+            eprintln!("zeron-pet: cannot initialize GTK (no Wayland display?)");
+            std::process::exit(3);
+        }
+        if !layer_shell::is_supported() {
+            eprintln!(
+                "zeron-pet: unsupported compositor — wlr layer-shell is required \
+                 (Hyprland/wlroots). Not claiming X11 or non-layer-shell support."
+            );
+            std::process::exit(3);
+        }
+        std::process::exit(desktop::run(cli));
     }
-    if !layer_shell::is_supported() {
-        eprintln!(
-            "zeron-pet: unsupported compositor — wlr layer-shell is required \
-             (Hyprland/wlroots). Not claiming X11 or non-layer-shell support."
-        );
-        std::process::exit(3);
-    }
-
-    std::process::exit(desktop::run(cli));
+    #[cfg(windows)]
+    std::process::exit(desktop_win::run(cli));
 }

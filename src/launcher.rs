@@ -162,6 +162,8 @@ impl ProbeDir {
                 .unwrap_or(0);
             let seq = TAG_SEQ.fetch_add(1, AtomicOrdering::Relaxed);
             let path = root.join(format!("zeron-pet-probe-{pid}-{nanos}-{seq}"));
+            // `mut` only pays for the unix-only mode(0o700) below.
+            #[allow(unused_mut)]
             let mut builder = fs::DirBuilder::new();
             #[cfg(unix)]
             {
@@ -291,10 +293,11 @@ fn run_bounded(
     })
 }
 
-/// Spawn a probe child with stdio bound to files. execve can report the
-/// target as busy (ETXTBSY) while the file is transiently busy at the OS
-/// level; retry within the caller's budget rather than failing on a
-/// transient — a persistent busy still surfaces as an error.
+/// Spawn a probe child with stdio bound to files. The OS can report the
+/// target as transiently busy (ETXTBSY on unix, sharing/lock violations
+/// on Windows while AV scans a fresh binary); retry within the caller's
+/// budget rather than failing on a transient — a persistent busy still
+/// surfaces as an error.
 fn spawn_bounded(
     executable: &Path,
     args: &[String],
@@ -319,7 +322,7 @@ fn spawn_bounded(
         {
             Ok(child) => return Ok(child),
             Err(e) => {
-                let text_busy = e.raw_os_error() == Some(libc::ETXTBSY);
+                let text_busy = transient_spawn_busy(&e);
                 attempt += 1;
                 if !text_busy || attempt > 10 || Instant::now() >= budget {
                     return Err(format!("spawn {} {:?}: {e}", executable.display(), args));
@@ -328,6 +331,18 @@ fn spawn_bounded(
             }
         }
     }
+}
+
+#[cfg(unix)]
+fn transient_spawn_busy(e: &std::io::Error) -> bool {
+    e.raw_os_error() == Some(libc::ETXTBSY)
+}
+
+/// ERROR_SHARING_VIOLATION / ERROR_LOCK_VIOLATION: a just-written binary
+/// can stay locked by AV or indexing for a few scheduler ticks.
+#[cfg(windows)]
+fn transient_spawn_busy(e: &std::io::Error) -> bool {
+    matches!(e.raw_os_error(), Some(32) | Some(33))
 }
 
 fn read_capped(path: &Path) -> String {
@@ -339,9 +354,16 @@ fn read_capped(path: &Path) -> String {
 }
 
 /// Spawn `executable` detached from this process: null stdio (nothing can
-/// hold the caller's pipes open), a fresh session via setsid, argv passed
-/// without a shell so values are preserved byte-for-byte.
+/// hold the caller's pipes open), a fresh session via setsid on unix /
+/// DETACHED_PROCESS + own process group on Windows, argv passed without a
+/// shell so values are preserved byte-for-byte.
 fn spawn_detached(executable: &Path, forwarded_args: &[String]) -> Result<Child, String> {
+    #[cfg(windows)]
+    use std::os::windows::process::CommandExt;
+    #[cfg(windows)]
+    use windows_sys::Win32::System::Threading::{
+        CREATE_BREAKAWAY_FROM_JOB, CREATE_NEW_PROCESS_GROUP, DETACHED_PROCESS,
+    };
     let args = strip_launch_flag(forwarded_args);
     let mut cmd = Command::new(executable);
     cmd.args(&args)
@@ -363,8 +385,24 @@ fn spawn_detached(executable: &Path, forwarded_args: &[String]) -> Result<Child,
             }
         });
     }
-    cmd.spawn()
-        .map_err(|e| format!("spawn {} {:?}: {e}", executable.display(), args))
+    #[cfg(windows)]
+    {
+        // DETACHED_PROCESS + own group mirrors the setsid split: no shared
+        // console, no console-ctrl propagation. BREAKAWAY additionally
+        // escapes an enclosing Job Object so a job-kill spares the pet.
+        cmd.creation_flags(CREATE_BREAKAWAY_FROM_JOB | CREATE_NEW_PROCESS_GROUP | DETACHED_PROCESS);
+    }
+    match cmd.spawn() {
+        #[cfg(windows)]
+        Err(e) if e.raw_os_error() == Some(5) => {
+            // ERROR_ACCESS_DENIED: the enclosing job lacks the breakaway
+            // limit. Retry inside the job — the pet still detaches.
+            cmd.creation_flags(CREATE_NEW_PROCESS_GROUP | DETACHED_PROCESS);
+            cmd.spawn()
+        }
+        r => r,
+    }
+    .map_err(|e| format!("spawn {} {:?}: {e}", executable.display(), args))
 }
 
 /// Remove flag-position `--launch` elements only. A `--launch` appearing as
@@ -487,10 +525,10 @@ mod tests {
         d
     }
 
+    #[cfg(unix)]
     fn write_exe(dir: &Path, body: &str) -> PathBuf {
         let p = dir.join("fake-pet");
         fs::write(&p, body).unwrap();
-        #[cfg(unix)]
         fs::set_permissions(&p, fs::Permissions::from_mode(0o755)).unwrap();
         p
     }
@@ -518,15 +556,16 @@ mod tests {
             0o700,
             "scratch dir must be owner-only"
         );
-        let f = probe_file(&dir.path("stdout")).unwrap();
+        let _f = probe_file(&dir.path("stdout")).unwrap();
         #[cfg(unix)]
         assert_eq!(
-            f.metadata().unwrap().permissions().mode() & 0o777,
+            _f.metadata().unwrap().permissions().mode() & 0o777,
             0o600,
             "transcript must be owner-only"
         );
         // create_new never overwrites what exists.
         assert!(probe_file(&dir.path("stdout")).is_err());
+        drop(_f); // Windows cannot remove a dir holding an open file.
         let created = dir.0.clone();
         drop(dir);
         assert!(!created.exists(), "guard must remove its own dir");
@@ -620,6 +659,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(unix)] // fixture is a #!/bin/sh script
     fn oversized_probe_output_fails_bounded() {
         let root = test_root("output-cap");
         // Writes 64KB to stdout then exits 0: exceeds the 16KB cap.
@@ -638,6 +678,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(unix)] // fixture is a #!/bin/sh script
     fn runaway_probe_output_is_killed_bounded() {
         let root = test_root("output-runaway");
         // Floods stderr forever: must be killed near the cap, not at 1s.
