@@ -9,6 +9,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -163,12 +164,94 @@ class DeliveryTests(unittest.TestCase):
     def test_rule_layers_keep_ci_from_bypassing_checks(self):
         configure = module('configure-repository')
         rules = {r['name']: r for r in configure.desired(123)}
+        app = {'actor_id': 123, 'actor_type': 'Integration', 'bypass_mode': 'always'}
         self.assertEqual(rules['main-required-review-and-ci']['bypass_actors'], [])
-        self.assertEqual(rules['main-ci-updates-only']['bypass_actors'],
-                         [{'actor_id': 123, 'actor_type': 'Integration', 'bypass_mode': 'always'}])
+        self.assertEqual(rules['main-ci-updates-only']['bypass_actors'], [app])
+        self.assertEqual(rules['dev-required-ci']['bypass_actors'], [app])
+        self.assertEqual(rules['release-tags-ci-creation']['bypass_actors'], [app])
         self.assertEqual(rules['release-tags-immutable']['bypass_actors'], [])
+        controls = rules['dev-owner-and-ci-updates']
+        self.assertEqual(controls['bypass_actors'][0]['bypass_mode'], 'pull_request')
+        self.assertEqual([r['type'] for r in controls['rules']], ['pull_request'])
+        self.assertTrue(controls['rules'][0]['parameters']['require_code_owner_review'])
+        for name in ('main-required-review-and-ci', 'dev-required-ci'):
+            status = next(r for r in rules[name]['rules'] if r['type'] == 'required_status_checks')
+            self.assertTrue(status['parameters']['strict_required_status_checks_policy'])
+            self.assertEqual(status['parameters']['required_status_checks'],
+                             [{'context': 'CI Gate', 'integration_id': 15368}])
         closed = {r['name']: r for r in configure.desired(0)}
         self.assertEqual(closed['release-tags-ci-creation']['bypass_actors'], [])
+        self.assertEqual(closed['dev-required-ci']['bypass_actors'], [])
+
+
+class AccessPreflightTests(unittest.TestCase):
+    def writer(self, login='Aut0iq', user_id=71998777, role='write'):
+        return {'login': login, 'id': user_id, 'permissions': {'push': True}, 'role_name': role}
+
+    def owner(self):
+        return {'login': 'Energy-Quant', 'id': 128940291, 'permissions': {'push': True}, 'role_name': 'admin'}
+
+    def test_write_allowlist_checks_account_id_and_role(self):
+        configure = module('configure-repository')
+        writer = self.writer()
+        configure.check_writers([self.owner(), writer], 123)
+        for users, app_id in (
+                ([self.owner(), self.writer(user_id=1)], 123),
+                ([self.owner(), self.writer(login='someone-else', user_id=42)], 123),
+                ([self.owner(), self.writer(role='admin')], 123),
+                ([self.owner(), writer], 0)):
+            with self.assertRaises(ValueError):
+                configure.check_writers(users, app_id)
+
+    def environment_fixture(self, configure, secret_count=0, branches=None, secret_names=None):
+        branches = [{'name': 'main', 'type': 'branch'}] if branches is None else branches
+        secret_names = [configure.APP_KEY] if secret_names is None else secret_names
+
+        def fake_api(path):
+            if path == 'repos/Energy-Quant/Iskra/actions/secrets':
+                return {'total_count': secret_count}
+            if path.startswith('repos/Energy-Quant/Iskra/environments/'):
+                return {'deployment_branch_policy': {'custom_branch_policies': True, 'protected_branches': False}}
+            raise AssertionError(path)
+
+        def fake_api_all(path, key=None):
+            if '/deployment-branch-policies?' in path:
+                self.assertEqual(key, 'branch_policies')
+                return branches
+            if '/secrets?' in path:
+                self.assertEqual(key, 'secrets')
+                return [{'name': name} for name in secret_names]
+            raise AssertionError(path)
+
+        return patch.object(configure, 'api', side_effect=fake_api), patch.object(configure, 'api_all', side_effect=fake_api_all)
+
+    def test_environment_requires_main_and_no_repository_secrets(self):
+        configure = module('configure-repository')
+        api_patch, all_patch = self.environment_fixture(configure)
+        with api_patch, all_patch:
+            configure.check_app_secret_scope()
+        api_patch, all_patch = self.environment_fixture(configure, secret_count=1)
+        with api_patch, all_patch, self.assertRaises(ValueError):
+            configure.check_app_secret_scope()
+        api_patch, all_patch = self.environment_fixture(
+            configure, branches=[{'name': 'main', 'type': 'branch'}, {'name': 'dev', 'type': 'branch'}])
+        with api_patch, all_patch, self.assertRaises(ValueError):
+            configure.check_app_secret_scope()
+        api_patch, all_patch = self.environment_fixture(configure, secret_names=['OTHER_SECRET'])
+        with api_patch, all_patch, self.assertRaises(ValueError):
+            configure.check_app_secret_scope()
+
+    def test_control_plane_codeowners_are_reviewed_without_blanket_owner(self):
+        self.assertEqual((ROOT / '.github/CODEOWNERS').read_text().splitlines(), [
+            '/.github/ @Energy-Quant', '/.githooks/ @Energy-Quant',
+            '/scripts/ @Energy-Quant', '/AGENTS.md @Energy-Quant'])
+
+    def test_dev_push_rejected_even_with_old_override_variable(self):
+        hook = ROOT / '.githooks/pre-push'
+        env = dict(os.environ, ISKRA_CONFIRM_DEV_PUSH='1')
+        result = subprocess.run([sys.executable, str(hook)], input='HEAD abc refs/heads/dev def\n',
+                                text=True, capture_output=True, env=env)
+        self.assertNotEqual(result.returncode, 0)
 
 
 if __name__ == '__main__':
