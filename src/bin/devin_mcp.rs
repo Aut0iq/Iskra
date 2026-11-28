@@ -150,25 +150,97 @@ fn handle_request(v: &Value, state_dir: &std::path::Path) -> Option<Value> {
     Some(json!({ "jsonrpc": "2.0", "id": id, "result": result }))
 }
 
-fn main() {
-    // The transport spawns `<program> mcp`; accept exactly that shape.
-    if std::env::args().nth(1).as_deref() != Some("mcp") {
-        eprintln!("usage: zeron-pet-devin-mcp mcp");
-        std::process::exit(2);
-    }
-    let dir = state_dir();
-    let stdin = std::io::stdin();
-    let stdout = std::io::stdout();
-    let mut out = stdout.lock();
-    for line in stdin.lock().lines() {
-        let Ok(line) = line else { break };
-        let Ok(v) = serde_json::from_str::<Value>(&line) else {
-            continue;
-        };
-        if let Some(resp) = handle_request(&v, &dir) {
-            if writeln!(out, "{resp}").and_then(|_| out.flush()).is_err() {
-                break;
+/// One lifecycle hook event applied to the session state files. Returns
+/// the new status when the event carries one. Hook payloads arrive on
+/// stdin in `hook` mode; cheap enough to run per tool call.
+fn apply_hook_event(v: &Value, dir: &std::path::Path) -> Option<()> {
+    let sid = v.get("session_id").and_then(Value::as_str)?;
+    let safe: String = sid
+        .chars()
+        .map(|c| {
+            if c.is_ascii_alphanumeric() || matches!(c, '_' | '.' | '-') {
+                c
+            } else {
+                '_'
             }
+        })
+        .collect();
+    let file = dir.join(format!("{safe}.json"));
+    let event = v.get("hook_event_name").and_then(Value::as_str)?;
+    if event == "SessionEnd" {
+        let _ = std::fs::remove_file(&file);
+        return Some(());
+    }
+    let status = match event {
+        "SessionStart" => "idle",
+        "UserPromptSubmit" | "PostToolUse" => "working",
+        "PreToolUse" => {
+            if v.get("tool_name").and_then(Value::as_str) == Some("ask_user_question") {
+                "awaitingInput"
+            } else {
+                "working"
+            }
+        }
+        "PermissionRequest" => "awaitingInput",
+        "Stop" => "completed",
+        _ => return None,
+    };
+    // The title sticks to the first user prompt; later events keep it.
+    let mut title = String::new();
+    if let Ok(text) = std::fs::read_to_string(&file) {
+        if let Some(old) = parse_session(&text) {
+            title = old.title;
+        }
+    }
+    if event == "UserPromptSubmit" {
+        if let Some(prompt) = v.get("prompt").and_then(Value::as_str) {
+            let first = prompt.lines().next().unwrap_or("").trim();
+            title = first.chars().take(60).collect();
+        }
+    }
+    let _ = std::fs::create_dir_all(dir);
+    let state = json!({
+        "session_id": sid,
+        "title": title,
+        "status": status,
+        "updated_epoch": now_epoch(),
+    });
+    std::fs::write(&file, state.to_string()).ok()?;
+    Some(())
+}
+
+fn main() {
+    let dir = state_dir();
+    match std::env::args().nth(1).as_deref() {
+        Some("mcp") => {
+            let stdin = std::io::stdin();
+            let stdout = std::io::stdout();
+            let mut out = stdout.lock();
+            for line in stdin.lock().lines() {
+                let Ok(line) = line else { break };
+                let Ok(v) = serde_json::from_str::<Value>(&line) else {
+                    continue;
+                };
+                if let Some(resp) = handle_request(&v, &dir) {
+                    if writeln!(out, "{resp}").and_then(|_| out.flush()).is_err() {
+                        break;
+                    }
+                }
+            }
+        }
+        // Lifecycle hook mode: read one payload on stdin, update state files.
+        // Silent by design — hook stdout is meaningful to the agent.
+        Some("hook") => {
+            let mut input = String::new();
+            if std::io::Read::read_to_string(&mut std::io::stdin(), &mut input).is_ok() {
+                if let Ok(v) = serde_json::from_str::<Value>(&input) {
+                    let _ = apply_hook_event(&v, &dir);
+                }
+            }
+        }
+        _ => {
+            eprintln!("usage: zeron-pet-devin-mcp mcp|hook");
+            std::process::exit(2);
         }
     }
 }
@@ -272,6 +344,77 @@ mod tests {
         )
         .unwrap();
         assert_eq!(resp["error"]["code"].as_i64(), Some(-32601));
+    }
+
+    #[test]
+    fn hook_event_lifecycle() {
+        let dir = state_fixture();
+        let sid = "sess-1";
+        let ev = |event: &str, extra: Value| {
+            let mut v = json!({"hook_event_name": event, "session_id": sid});
+            if let Value::Object(m) = extra {
+                for (k, val) in m {
+                    v[k] = val;
+                }
+            }
+            v
+        };
+        let status_of = |dir: &std::path::Path| {
+            parse_session(&std::fs::read_to_string(dir.join(format!("{sid}.json"))).unwrap())
+                .map(|s| (s.status, s.title))
+        };
+
+        apply_hook_event(&ev("SessionStart", json!({})), &dir).unwrap();
+        assert_eq!(status_of(&dir).unwrap().0, "idle");
+
+        apply_hook_event(
+            &ev(
+                "UserPromptSubmit",
+                json!({"prompt": "fix the pet\nsecond line"}),
+            ),
+            &dir,
+        )
+        .unwrap();
+        assert_eq!(
+            status_of(&dir).unwrap(),
+            ("working".into(), "fix the pet".into())
+        );
+
+        apply_hook_event(
+            &ev("PreToolUse", json!({"tool_name": "ask_user_question"})),
+            &dir,
+        )
+        .unwrap();
+        assert_eq!(status_of(&dir).unwrap().0, "awaitingInput");
+
+        // Tool activity after the answer returns the session to working,
+        // and the title survives.
+        apply_hook_event(&ev("PreToolUse", json!({"tool_name": "exec"})), &dir).unwrap();
+        assert_eq!(
+            status_of(&dir).unwrap(),
+            ("working".into(), "fix the pet".into())
+        );
+
+        apply_hook_event(&ev("PermissionRequest", json!({})), &dir).unwrap();
+        assert_eq!(status_of(&dir).unwrap().0, "awaitingInput");
+
+        apply_hook_event(&ev("Stop", json!({})), &dir).unwrap();
+        assert_eq!(status_of(&dir).unwrap().0, "completed");
+
+        apply_hook_event(&ev("SessionEnd", json!({})), &dir).unwrap();
+        assert!(!dir.join(format!("{sid}.json")).exists());
+    }
+
+    #[test]
+    fn hook_event_sanitizes_session_id() {
+        let dir = state_fixture();
+        apply_hook_event(
+            &json!({"hook_event_name": "SessionStart", "session_id": "../evil/../x"}),
+            &dir,
+        )
+        .unwrap();
+        assert!(dir.join(".._evil_.._x.json").exists());
+        assert!(!dir.join("evil").exists());
     }
 
     #[test]
